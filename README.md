@@ -1,4 +1,4 @@
-This is a ray-tracer implemented almost entirely in an OpenGL ES fragment shader.  It features triangles, a BVH built at load time, physically based materials, and HDR environment maps.
+This is an interactive ray-tracer implemented almost entirely in an OpenGL ES fragment shader.  It features triangles, a BVH built at load time, physically based materials, and HDR environment maps.
 
 ![Gold Stanford Bunny in Pisa](bunny.jpg "Gold Stanford Bunny in Pisa") ![Glazed plaster Stanford Bunny in Pisa](bunny2.jpg "Glazed plaster Stanford Bunny in Pisa")
 
