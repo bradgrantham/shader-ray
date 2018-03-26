@@ -6,10 +6,11 @@ It runs on MacOS and requires GLFW and FreeImagePlus.  Build it using ```make```
 
 Run it like so:
 
-```./ray model environment
+```
+./ray model environment
 ```
 
-For models and environment images, check out https://github.com/bradgrantham/scene-data .  Try bunny.trisrc (may need to be uncompressed after checking out) and pisa.hdr.
+For models and environment images, check out https://github.com/bradgrantham/scene-data .  Try models/bunny.trisrc (may need to be uncompressed after checking out) and images/pisa.hdr.
 
 The pointer moves the object by default.  Press SHIFT to zoom in and out.  Press 'l' to switch to rotating the light (visible on diffuse models) and 'o' to switch back to moving the object.
 
