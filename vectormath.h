@@ -16,22 +16,13 @@ struct vec4
     float x, y, z, w;
     vec4() {}
     vec4(const vec4&v) :
-        x(v.x),
-        y(v.y),
-        z(v.z),
-        w(v.w)
+        x(v.x), y(v.y), z(v.z), w(v.w)
     {}
     vec4(float v) :
-        x(v),
-        y(v),
-        z(v),
-        w(1)
+        x(v), y(v), z(v), w(1)
     {}
     vec4(float x_, float y_, float z_, float w_) :
-        x(x_),
-        y(y_),
-        z(z_),
-        w(w_)
+        x(x_), y(y_), z(z_), w(w_)
     {}
     vec4& operator=(const vec4& p)
     {
@@ -57,19 +48,13 @@ struct vec3
     float x, y, z;
     vec3() {}
     vec3(const vec3&v) :
-        x(v.x),
-        y(v.y),
-        z(v.z)
+        x(v.x), y(v.y), z(v.z)
     {}
     vec3(float v) :
-        x(v),
-        y(v),
-        z(v)
+        x(v), y(v), z(v)
     {}
     vec3(float x_, float y_, float z_) :
-        x(x_),
-        y(y_),
-        z(z_)
+        x(x_), y(y_), z(z_)
     {}
     vec3& operator=(const vec3& p)
     {
@@ -113,6 +98,16 @@ inline vec3 operator+(const vec3& v1, const vec3& v2)
     vec3 v;
     v.set(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     return v;
+}
+
+inline vec3 max(const vec3& v0, const vec3& v1)
+{
+    return vec3(std::max(v0.x, v1.x), std::max(v0.y, v1.y), std::max(v0.z, v1.z));
+}
+
+inline vec3 min(const vec3& v0, const vec3& v1)
+{
+    return vec3(std::min(v0.x, v1.x), std::min(v0.y, v1.y), std::min(v0.z, v1.z));
 }
 
 inline vec3 cross(const vec3& v0, const vec3& v1)
@@ -171,52 +166,32 @@ struct box3d {
     }
     vec3 dim() const // for any dimension for which min > max, returns 0
     {
-        return vec3(
-            std::max(0.0f, boxmax.x - boxmin.x),
-            std::max(0.0f, boxmax.y - boxmin.y),
-            std::max(0.0f, boxmax.z - boxmin.z)
-        );
+        return max(vec3(0, 0, 0), boxmax - boxmin);
     }
     box3d& add(const vec3& v)
     {
         const float bumpout = .00001;
-        boxmin.x = std::min(boxmin.x, v.x - bumpout);
-        boxmin.y = std::min(boxmin.y, v.y - bumpout);
-        boxmin.z = std::min(boxmin.z, v.z - bumpout);
-        boxmax.x = std::max(boxmax.x, v.x + bumpout);
-        boxmax.y = std::max(boxmax.y, v.y + bumpout);
-        boxmax.z = std::max(boxmax.z, v.z + bumpout);
+        boxmin = min(boxmin, v - bumpout);
+        boxmax = max(boxmax, v + bumpout);
         return *this;
     }
     box3d& add(const vec3& c, float r)
     {
         const float bumpout = 1.0001;
-        boxmin.x = std::min(boxmin.x, c.x - r * bumpout);
-        boxmin.y = std::min(boxmin.y, c.y - r * bumpout);
-        boxmin.z = std::min(boxmin.z, c.z - r * bumpout);
-        boxmax.x = std::max(boxmax.x, c.x + r * bumpout);
-        boxmax.y = std::max(boxmax.y, c.y + r * bumpout);
-        boxmax.z = std::max(boxmax.z, c.z + r * bumpout);
+        boxmin = min(boxmin, c - r * bumpout);
+        boxmax = max(boxmax, c + r * bumpout);
         return *this;
     }
     box3d& add(const vec3& addmin, const vec3& addmax)
     {
-        boxmin.x = std::min(addmin.x, boxmin.x);
-        boxmin.y = std::min(addmin.y, boxmin.y);
-        boxmin.z = std::min(addmin.z, boxmin.z);
-        boxmax.x = std::max(addmax.x, boxmax.x);
-        boxmax.y = std::max(addmax.y, boxmax.y);
-        boxmax.z = std::max(addmax.z, boxmax.z);
+        boxmin = min(addmin, boxmin);
+        boxmax = max(addmax, boxmax);
         return *this;
     }
     box3d& add(const box3d& box)
     {
-        boxmin.x = std::min(box.boxmin.x, boxmin.x);
-        boxmin.y = std::min(box.boxmin.y, boxmin.y);
-        boxmin.z = std::min(box.boxmin.z, boxmin.z);
-        boxmax.x = std::max(box.boxmax.x, boxmax.x);
-        boxmax.y = std::max(box.boxmax.y, boxmax.y);
-        boxmax.z = std::max(box.boxmax.z, boxmax.z);
+        boxmin = min(box.boxmin, boxmin);
+        boxmax = max(box.boxmax, boxmax);
         return *this;
     }
     box3d& add(const vec3& v0, const vec3& v1, const vec3& v2)
