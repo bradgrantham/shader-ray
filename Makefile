@@ -1,7 +1,7 @@
 default : ray 
 
 # OPTFLAGS        ?=      -O3 -ffast-math -msse4.1
-OPTFLAGS        ?=      -O3 -g -march=nocona -mtune=nocona -fstrict-aliasing -ffast-math -ffinite-math-only -fprefetch-loop-arrays -msse3
+OPTFLAGS        ?=      -O3 -g -march=nocona -mtune=nocona -fstrict-aliasing -ffast-math -ffinite-math-only -mavx
 
 LDFLAGS_GL	+=	-L/opt/local/lib  -lglfw -framework OpenGL -framework Cocoa -framework IOkit -lfreeimageplus
 
