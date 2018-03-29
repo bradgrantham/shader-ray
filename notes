@@ -1,0 +1,7 @@
+Go through C++ and GLSL and note obvious cleanups / clarifications
+Decent cleanup pass
+Get rid of C++ ray-tracing code?
+Make named constants (e.g. BVH stats array)
+If build_bvh_startgrid is not being used, delete it.
+chrono
+more C++ish pointer operations
