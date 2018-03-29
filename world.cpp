@@ -986,6 +986,7 @@ scene_shader_data::scene_shader_data() :
     group_boxmax(NULL),
     group_directions(NULL),
     group_children(NULL),
+    group_hitmiss(NULL),
     group_objects(NULL)
 {
 }
@@ -1000,4 +1001,5 @@ scene_shader_data::~scene_shader_data()
     delete[] group_objects;
     delete[] group_boxmin;
     delete[] group_boxmax;
+    delete[] group_hitmiss;
 }
