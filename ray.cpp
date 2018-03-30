@@ -20,7 +20,6 @@ bool redraw_window = false;
 bool stream_frames = false;
 
 int gWindowWidth, gWindowHeight;
-unsigned char *gImage;
 world *gWorld;
 timeval prev_frame_time;
 float zoom = 0.0f;
@@ -630,7 +629,6 @@ void init()
     init_decal_program();
     init_decal_geometry();
     load_scene_data(gWorld, raytracer_gl);
-    gImage = new unsigned char[(((gWindowWidth * 3) + 3) & ~3) * gWindowHeight];
 }
 
 void DrawFrame(GLFWwindow *window)
@@ -638,167 +636,118 @@ void DrawFrame(GLFWwindow *window)
     glClearColor(1, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(render_mode == CPU) {
+    glUseProgram(raytracer_gl.program);
+    check_opengl(__FILE__, __LINE__);
 
-        timeval t1, t2;
-        gettimeofday(&t1, NULL);
+    int which_texture = 0;
 
-        trace_image(gWindowWidth, gWindowHeight, gWindowHeight / (1.0f * gWindowWidth), gImage, gWorld, light_dir);
-        gettimeofday(&t2, NULL);
-        long long micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
-        printf("trace: %lld millis\n", micros / 1000);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_positions_texture);
+    glUniform1i(raytracer_gl.vertex_positions_uniform, which_texture);
+    which_texture++;
 
-        glUseProgram(decalprogram);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_colors_texture);
+    glUniform1i(raytracer_gl.vertex_colors_uniform, which_texture);
+    which_texture++;
 
-        glActiveTexture(GL_TEXTURE0 + 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gWindowWidth, gWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, gImage);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_normals_texture);
+    glUniform1i(raytracer_gl.vertex_normals_uniform, which_texture);
+    which_texture++;
 
-        glBindBuffer(GL_ARRAY_BUFFER, vert_buffer);
-        glVertexAttribPointer(pos_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(pos_attrib);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_objects_texture);
+    glUniform1i(raytracer_gl.group_objects_uniform, which_texture);
+    which_texture++;
 
-        glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
-        glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(texcoord_attrib);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_hitmiss_texture);
+    glUniform1i(raytracer_gl.group_hitmiss_uniform, which_texture);
+    which_texture++;
 
-        glUniformMatrix4fv(modelview_uniform, 1, GL_FALSE, mat4_identity);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_directions_texture);
+    glUniform1i(raytracer_gl.group_directions_uniform, which_texture);
+    which_texture++;
 
-        glBindVertexArray(screenquad_vao);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_boxmin_texture);
+    glUniform1i(raytracer_gl.group_boxmin_uniform, which_texture);
+    which_texture++;
 
-    } else if(render_mode == FRAGMENT_SHADER) {
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_boxmax_texture);
+    glUniform1i(raytracer_gl.group_boxmax_uniform, which_texture);
+    which_texture++;
 
-        glUseProgram(raytracer_gl.program);
-        check_opengl(__FILE__, __LINE__);
+    glActiveTexture(GL_TEXTURE0 + which_texture);
+    glBindTexture(GL_TEXTURE_2D, raytracer_gl.background_texture);
+    glUniform1i(raytracer_gl.background_texture_uniform, which_texture);
+    which_texture++;
 
-        int which_texture = 0;
+    check_opengl(__FILE__, __LINE__);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_positions_texture);
-        glUniform1i(raytracer_gl.vertex_positions_uniform, which_texture);
-        which_texture++;
+    glUniform1i(raytracer_gl.which_uniform, which);
+    glUniform1f(raytracer_gl.tree_root_uniform, scene_data.tree_root);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_colors_texture);
-        glUniform1i(raytracer_gl.vertex_colors_uniform, which_texture);
-        which_texture++;
+    glUniform1i(raytracer_gl.vertex_data_rows_uniform, scene_data.vertex_data_rows);
+    glUniform1i(raytracer_gl.group_data_rows_uniform, scene_data.group_data_rows);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.vertex_normals_texture);
-        glUniform1i(raytracer_gl.vertex_normals_uniform, which_texture);
-        which_texture++;
+    glUniformMatrix4fv(raytracer_gl.camera_matrix_uniform, 1, GL_FALSE, gWorld->camera_matrix);
+    glUniformMatrix4fv(raytracer_gl.camera_normal_matrix_uniform, 1, GL_FALSE, gWorld->camera_normal_matrix);
+    glUniformMatrix4fv(raytracer_gl.object_matrix_uniform, 1, GL_FALSE, gWorld->object_matrix);
+    glUniformMatrix4fv(raytracer_gl.object_inverse_uniform, 1, GL_FALSE, gWorld->object_inverse);
+    glUniformMatrix4fv(raytracer_gl.object_normal_matrix_uniform, 1, GL_FALSE, gWorld->object_normal_matrix);
+    glUniformMatrix4fv(raytracer_gl.object_normal_inverse_uniform, 1, GL_FALSE, gWorld->object_normal_inverse);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_objects_texture);
-        glUniform1i(raytracer_gl.group_objects_uniform, which_texture);
-        which_texture++;
+    // Since I always have trouble with this:
+    // If tan(theta) yields (y / x), then tan() gives the
+    // intersection at (x = 1) of the line at angle theta from X
+    // axis.
+    // So if the "full" field of view is "fov", and we consider
+    // the view direction to be the X axis,
+    // then theta is actually (fov / 2), thus tan(fov / 2) will
+    // only be the units from the view axis to the left or right
+    // side of the field of view.
+    // So the "full" X width has to be 2 * tan(fov / 2).
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_hitmiss_texture);
-        glUniform1i(raytracer_gl.group_hitmiss_uniform, which_texture);
-        which_texture++;
+    float image_plane_width = 2 * tanf(gWorld->cam.fov / 2.0);
+    float aspect = gWindowHeight / (1.0f * gWindowWidth);
+    glUniform1f(raytracer_gl.image_plane_width_uniform, image_plane_width);
+    glUniform1f(raytracer_gl.aspect_uniform, aspect);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_directions_texture);
-        glUniform1i(raytracer_gl.group_directions_uniform, which_texture);
-        which_texture++;
+    vec4 d(image_plane_width / gWindowWidth, 0, 0, 0.0);
+    vec4 right_vector = gWorld->camera_normal_matrix * d;
+    glUniform3fv(raytracer_gl.right_uniform, 1, (GLfloat*)&right_vector);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_boxmin_texture);
-        glUniform1i(raytracer_gl.group_boxmin_uniform, which_texture);
-        which_texture++;
+    d = vec4(0, image_plane_width * aspect / gWindowHeight, 0, 0.0);
+    vec4 up_vector = gWorld->camera_normal_matrix * d;
+    glUniform3fv(raytracer_gl.up_uniform, 1, (GLfloat*)&up_vector);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.group_boxmax_texture);
-        glUniform1i(raytracer_gl.group_boxmax_uniform, which_texture);
-        which_texture++;
+    glBindBuffer(GL_ARRAY_BUFFER, vert_buffer);
+    glVertexAttribPointer(pos_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(pos_attrib);
 
-        glActiveTexture(GL_TEXTURE0 + which_texture);
-        glBindTexture(GL_TEXTURE_2D, raytracer_gl.background_texture);
-        glUniform1i(raytracer_gl.background_texture_uniform, which_texture);
-        which_texture++;
+    glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
+    glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(texcoord_attrib);
 
-        check_opengl(__FILE__, __LINE__);
+    glUniformMatrix4fv(raytracer_gl.modelview_uniform, 1, GL_FALSE, mat4_identity);
 
-        glUniform1i(raytracer_gl.which_uniform, which);
-        glUniform1f(raytracer_gl.tree_root_uniform, scene_data.tree_root);
-
-        glUniform1i(raytracer_gl.vertex_data_rows_uniform, scene_data.vertex_data_rows);
-        glUniform1i(raytracer_gl.group_data_rows_uniform, scene_data.group_data_rows);
-
-        glUniformMatrix4fv(raytracer_gl.camera_matrix_uniform, 1, GL_FALSE, gWorld->camera_matrix);
-        glUniformMatrix4fv(raytracer_gl.camera_normal_matrix_uniform, 1, GL_FALSE, gWorld->camera_normal_matrix);
-        glUniformMatrix4fv(raytracer_gl.object_matrix_uniform, 1, GL_FALSE, gWorld->object_matrix);
-        glUniformMatrix4fv(raytracer_gl.object_inverse_uniform, 1, GL_FALSE, gWorld->object_inverse);
-        glUniformMatrix4fv(raytracer_gl.object_normal_matrix_uniform, 1, GL_FALSE, gWorld->object_normal_matrix);
-        glUniformMatrix4fv(raytracer_gl.object_normal_inverse_uniform, 1, GL_FALSE, gWorld->object_normal_inverse);
-
-        // Since I always have trouble with this:
-	// If tan(theta) yields (y / x), then tan() gives the
-	// intersection at (x = 1) of the line at angle theta from X
-	// axis.
-	// So if the "full" field of view is "fov", and we consider
-	// the view direction to be the X axis,
-	// then theta is actually (fov / 2), thus tan(fov / 2) will
-	// only be the units from the view axis to the left or right
-	// side of the field of view.
-        // So the "full" X width has to be 2 * tan(fov / 2).
-
-        float image_plane_width = 2 * tanf(gWorld->cam.fov / 2.0);
-        float aspect = gWindowHeight / (1.0f * gWindowWidth);
-        glUniform1f(raytracer_gl.image_plane_width_uniform, image_plane_width);
-        glUniform1f(raytracer_gl.aspect_uniform, aspect);
-
-        vec4 d(image_plane_width / gWindowWidth, 0, 0, 0.0);
-        vec4 right_vector = gWorld->camera_normal_matrix * d;
-        glUniform3fv(raytracer_gl.right_uniform, 1, (GLfloat*)&right_vector);
-
-        d = vec4(0, image_plane_width * aspect / gWindowHeight, 0, 0.0);
-        vec4 up_vector = gWorld->camera_normal_matrix * d;
-        glUniform3fv(raytracer_gl.up_uniform, 1, (GLfloat*)&up_vector);
-
-        glBindBuffer(GL_ARRAY_BUFFER, vert_buffer);
-        glVertexAttribPointer(pos_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(pos_attrib);
-
-        glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
-        glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(texcoord_attrib);
-
-        glUniformMatrix4fv(raytracer_gl.modelview_uniform, 1, GL_FALSE, mat4_identity);
-
-        glUniform3fv(raytracer_gl.light_dir_uniform, 1, (GLfloat*)&light_dir);
+    glUniform3fv(raytracer_gl.light_dir_uniform, 1, (GLfloat*)&light_dir);
 
 
-        material& mtl = materials[which_material];
-        glUniform3fv(raytracer_gl.specular_color_uniform, 1, (GLfloat*)&mtl.specular_color);
-        if(mtl.metal)
-            glUniform3f(raytracer_gl.diffuse_color_uniform, 0, 0, 0);
-        else
-            glUniform3fv(raytracer_gl.diffuse_color_uniform, 1, (GLfloat*)&diffuse_colors[which_diffuse_color]);
+    material& mtl = materials[which_material];
+    glUniform3fv(raytracer_gl.specular_color_uniform, 1, (GLfloat*)&mtl.specular_color);
+    if(mtl.metal)
+        glUniform3f(raytracer_gl.diffuse_color_uniform, 0, 0, 0);
+    else
+        glUniform3fv(raytracer_gl.diffuse_color_uniform, 1, (GLfloat*)&diffuse_colors[which_diffuse_color]);
 
-        glBindVertexArray(screenquad_vao);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        check_opengl(__FILE__, __LINE__);
-
-    } else /* OPENGL_GEOMETRY */ {
-
-#if 0
-        set projection from fov
-        construct modelview
-            viewpoint and rotation
-        need vertex shader - pass transformed vertex, normal
-        need fragment shader - normalize normal, do lighting 
-        need triangle geometry
-        for triangle spheres
-            set transformation matrix
-            set color
-            draw sphere
-#endif
-
-    }
+    glBindVertexArray(screenquad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    check_opengl(__FILE__, __LINE__);
 
     redraw_window = true;
     check_opengl(__FILE__, __LINE__);
@@ -1039,9 +988,6 @@ void ResizeCallback(GLFWwindow *window, int x, int y)
     glfwGetFramebufferSize(window, &gWindowWidth, &gWindowHeight);
 
     glViewport(0, 0, gWindowWidth, gWindowHeight);
-
-    delete[] gImage;
-    gImage = new unsigned char[(((gWindowWidth * 3) + 3) & ~3) * gWindowHeight];
 
     check_opengl(__FILE__, __LINE__);
     redraw_window = true;
