@@ -1,5 +1,3 @@
-Extract ray from world.cpp
-Go through C++ and GLSL and note obvious cleanups / clarifications
 Tighten BVH code - get rid of dead blocks
 Try to get group data into the same texture for caching
     13 values - 4 vec4s?
