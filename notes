@@ -1,7 +1,12 @@
+Extract ray from world.cpp
 Go through C++ and GLSL and note obvious cleanups / clarifications
-Decent cleanup pass
+Tighten BVH code - get rid of dead blocks
+Try to get group data into the same texture for caching
+    13 values - 4 vec4s?
+    2 more with hitmiss
+Try to get triangle data into the same texture for caching
+    at least position + color + normal = 9 values, 3 vec3s?
 Get rid of C++ ray-tracing code?
 Make named constants (e.g. BVH stats array)
-If build_bvh_startgrid is not being used, delete it.
 chrono
 more C++ish pointer operations
