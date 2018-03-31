@@ -248,36 +248,7 @@ static char *load_text(FILE *fp)
     return text;
 }
 
-GLint modelview_uniform = -1;
-GLint texture_uniform = -1;
 GLint pos_attrib = 0, texcoord_attrib = 1;
-GLuint decalprogram;
-
-static const char *gDecalVertexShaderText =
-"#version 140\n"
-"uniform mat4 modelview;\n"
-"in vec4 pos;\n"
-"in vec2 vtex;\n"
-"out vec2 ftex;\n"
-"\n"
-"void main()\n"
-"{\n"
-"\n"
-"    gl_Position = modelview * pos;\n"
-"    ftex = vtex;\n"
-"}\n";
-
-static const char *gDecalFragmentShaderText =
-"#version 140\n"
-"uniform sampler2D texture_image;\n"
-"out vec4 color;\n"
-"\n"
-"in vec2 ftex;\n"
-"\n"
-"void main()\n"
-"{\n"
-"    color = texture(texture_image, ftex);\n"
-"}\n";
 
 static char *gRayTracingFragmentShaderText;
 static char *gRayTracingVertexShaderText;
@@ -285,7 +256,6 @@ static char *gRayTracingVertexShaderText;
 GLuint vert_buffer;
 GLuint texcoord_buffer;
 GLuint screenquad_vao;
-GLuint decal_vertex_shader;
 
 struct raytracer_gl_binding
 {
@@ -523,39 +493,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void init_decal_program()
-{
-    check_opengl(__FILE__, __LINE__);
-
-    decal_vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    const char *string = gDecalVertexShaderText;
-    glShaderSource(decal_vertex_shader, 1, &string, NULL);
-    glCompileShader(decal_vertex_shader);
-    if(!CheckShaderCompile(decal_vertex_shader, "vertex shader"))
-	exit(1);
-
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    string = gDecalFragmentShaderText;
-    glShaderSource(fragment_shader, 1, &string, NULL);
-    glCompileShader(fragment_shader);
-    if(!CheckShaderCompile(fragment_shader, "fragment shader"))
-	exit(1);
-
-    decalprogram = glCreateProgram();
-    glAttachShader(decalprogram, decal_vertex_shader);
-    glAttachShader(decalprogram, fragment_shader);
-    glBindAttribLocation(decalprogram, pos_attrib, "pos");
-    glBindAttribLocation(decalprogram, texcoord_attrib, "vtex");
-    glLinkProgram(decalprogram);
-    if(!CheckProgramLink(decalprogram))
-	exit(1);
-
-    modelview_uniform = glGetUniformLocation(decalprogram, "modelview");
-    texture_uniform = glGetUniformLocation(decalprogram, "texture_image");
-    glUseProgram(decalprogram);
-}
-
-void init_decal_geometry(void)
+void init_screenquad_geometry(void)
 {
     float verts[4][4];
     float texcoords[4][2];
@@ -626,8 +564,7 @@ void init()
         printf("max anisotropy: %f\n", max_anisotropy);
     }
 
-    init_decal_program();
-    init_decal_geometry();
+    init_screenquad_geometry();
     load_scene_data(gWorld, raytracer_gl);
 }
 
