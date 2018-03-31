@@ -48,18 +48,12 @@ static unsigned int bvh_leaf_max = 10; // Empirically chosen on Intel embedded o
 static float sah_ctrav = 1;
 static float sah_cisec = 4; // ??
 
-bool try_all_three = false;
-
 float geometryScaleFactor = 1.0f;
 bool correctFileColorGamma = true;
 
 static void initialize_runtime_parameters() __attribute__((constructor));
 static void initialize_runtime_parameters()
 {
-    if(getenv("TRY_ALL_THREE") != 0) {
-        try_all_three = true;
-        fprintf(stderr, "Will try all three axes for BVH split\n");
-    }
     if(getenv("BVH_MAX_DEPTH") != 0) {
         bvh_max_depth = atoi(getenv("BVH_MAX_DEPTH"));
         fprintf(stderr, "BVH max depth set to %d\n", bvh_max_depth);
