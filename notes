@@ -1,10 +1,16 @@
-Tighten BVH code - get rid of dead blocks
-Try to get group data into the same texture for caching
-    13 values - 4 vec4s?
-    2 more with hitmiss
-Try to get triangle data into the same texture for caching
-    at least position + color + normal = 9 values, 3 vec3s?
-Get rid of C++ ray-tracing code?
+Better cache behavior
+    Try group data into the same texture for caching, measure performance
+        15 values - 4 vec4s?
+    Try triangle data into the same texture for caching, measure performance
+        9 values - 3 vec3s?
+    textures are probably cached by 8x8 or 16x16 or other pow2 regions
+        So try to store them as pow2 so they don't cross a boundary?
+        But GPUs are getting better at compute storing and reading from buffers
 Make named constants (e.g. BVH stats array)
 chrono
 more C++ish pointer operations
+verify ray differentials
+PBR
+hierarchical objects
+fly
+gltf 2.0
