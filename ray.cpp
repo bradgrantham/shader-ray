@@ -174,8 +174,9 @@ static bool CheckShaderCompile(GLuint shader, const std::string& shader_name)
 {
     int status;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if(status == GL_TRUE)
+    if(status == GL_TRUE) {
         return true;
+    }
 
     if(gPrintShaderLog) {
         int length;
@@ -201,8 +202,9 @@ static bool CheckProgramLink(GLuint program)
 {
     int status;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if(status == GL_TRUE)
+    if(status == GL_TRUE) {
         return true;
+    }
 
     if(gPrintShaderLog) {
         int log_length;
@@ -341,10 +343,12 @@ int new_data_texture()
 void load_scene_data(world *w, raytracer_gl_binding &binding)
 {
     const char *filename;
-    if(getenv("SHADER") != NULL)
+    if(getenv("SHADER") != NULL) {
         filename = getenv("SHADER");
-    else
+    } else {
         filename = "raytracer.es.fs";
+    }
+
     FILE *fp = fopen(filename, "r");
     if(fp == NULL) {
         fprintf(stderr, "couldn't open raytracer.fs\n");
@@ -390,8 +394,9 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     raytracer_gl.fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(raytracer_gl.fragment_shader, 3, strings, NULL);
     glCompileShader(raytracer_gl.fragment_shader);
-    if(!CheckShaderCompile(raytracer_gl.fragment_shader, "ray tracer fragment shader"))
+    if(!CheckShaderCompile(raytracer_gl.fragment_shader, "ray tracer fragment shader")) {
         exit(1);
+    }
 
     strings[0] = version;
     strings[1] = preamble;
@@ -399,8 +404,9 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     raytracer_gl.vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(raytracer_gl.vertex_shader, 3, strings, NULL);
     glCompileShader(raytracer_gl.vertex_shader);
-    if(!CheckShaderCompile(raytracer_gl.vertex_shader, "ray tracer vertex shader"))
+    if(!CheckShaderCompile(raytracer_gl.vertex_shader, "ray tracer vertex shader")) {
         exit(1);
+    }
 
     raytracer_gl.program = glCreateProgram();
     glAttachShader(raytracer_gl.program, raytracer_gl.vertex_shader);
@@ -408,8 +414,9 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     glBindAttribLocation(raytracer_gl.program, pos_attrib, "pos");
     glBindAttribLocation(raytracer_gl.program, texcoord_attrib, "vtex");
     glLinkProgram(raytracer_gl.program);
-    if(!CheckProgramLink(raytracer_gl.program))
+    if(!CheckProgramLink(raytracer_gl.program)) {
         exit(1);
+    }
 
     glUseProgram(raytracer_gl.program);
     check_opengl(__FILE__, __LINE__);
@@ -549,8 +556,9 @@ void init()
         GLint num_extensions;
         glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
         printf("GL_EXTENSIONS: \n");
-        for(int i = 0; i < num_extensions; i++)
+        for(int i = 0; i < num_extensions; i++) {
             printf("    \"%s\"\n", glGetStringi(GL_EXTENSIONS, i));
+        }
 
         GLint max_tex;
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_tex);
@@ -675,10 +683,11 @@ void DrawFrame(GLFWwindow *window)
 
     material& mtl = materials[which_material];
     glUniform3fv(raytracer_gl.specular_color_uniform, 1, (GLfloat*)&mtl.specular_color);
-    if(mtl.metal)
+    if(mtl.metal) {
         glUniform3f(raytracer_gl.diffuse_color_uniform, 0, 0, 0);
-    else
+    } else {
         glUniform3fv(raytracer_gl.diffuse_color_uniform, 1, (GLfloat*)&diffuse_colors[which_diffuse_color]);
+    }
 
     glBindVertexArray(screenquad_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -738,8 +747,9 @@ int screenshot(const char *colorName, const char *alphaName)
         glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
             GL_RGB, GL_UNSIGNED_BYTE, pixels);
         fprintf(fp, "P6 %d %d 255\n", viewport[2], viewport[3]);
-        for(i = viewport[3] - 1; i >= 0; i--)
+        for(i = viewport[3] - 1; i >= 0; i--) {
             fwrite(pixels + viewport[2] * 3 * i, 3, viewport[2], fp);
+        }
         fclose(fp);
     }
 
@@ -752,8 +762,9 @@ int screenshot(const char *colorName, const char *alphaName)
         glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
             GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
         fprintf(fp, "P5 %d %d 255\n", viewport[2], viewport[3]);
-        for(i = viewport[3] - 1; i >= 0; i--)
+        for(i = viewport[3] - 1; i >= 0; i--) {
             fwrite(pixels + viewport[2] * i, 1, viewport[2], fp);
+        }
         fclose(fp);
     }
 
@@ -933,8 +944,9 @@ int main(int argc, char *argv[])
 
     glfwSetErrorCallback(ErrorCallback);
 
-    if(!glfwInit())
+    if(!glfwInit()) {
         exit(EXIT_FAILURE);
+    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -987,7 +999,7 @@ int main(int argc, char *argv[])
         const int tilesize = 8;
         const int barsize = 1;
         background_image = new float2Dimage(width, height);
-        for(int j = 0; j < height; j++)
+        for(int j = 0; j < height; j++) {
             for(int i = 0; i < width; i++) {
                 float *pixel = background_image->pixels + 3 * (width * j + i);
                 bool grid = ((i % tilesize) < barsize) || ((j % tilesize) < barsize);
@@ -1001,6 +1013,7 @@ int main(int argc, char *argv[])
                     pixel[2] = 0.0;
                 }
             }
+        }
     } else if(sscanf(argv[2], "%2x%2x%2x", &rx, &gx, &bx) == 3) {
         background_image = new float2Dimage(1, 1);
         background_image->pixels[0] = rx / 255.0;
@@ -1029,7 +1042,7 @@ int main(int argc, char *argv[])
 
             } else if (image.getImageType() == FIT_BITMAP){
 
-                for(int j = 0; j < background_image->height; j++)
+                for(int j = 0; j < background_image->height; j++) {
                     for(int i = 0; i < background_image->width; i++) {
                         RGBQUAD src;
                         image.getPixelColor(i, j, &src);
@@ -1038,6 +1051,7 @@ int main(int argc, char *argv[])
                         dst[1] = src.rgbGreen / 255.0;
                         dst[2] = src.rgbBlue / 255.0;
                     }
+                }
 
             } else {
 
@@ -1109,10 +1123,11 @@ int main(int argc, char *argv[])
             redraw_window = false;
         }
 
-        if(stream_frames)
+        if(stream_frames) {
             glfwPollEvents();
-        else
+        } else {
             glfwWaitEvents();
+        }
     }
 
     glfwTerminate();

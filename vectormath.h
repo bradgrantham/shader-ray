@@ -242,12 +242,14 @@ inline vec4 operator*(const float m[16], const vec4& in)
     int i;
     float t[4];
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; i++) {
         t[i] =
             m[0 + i] * in.x + 
             m[4 + i] * in.y + 
             m[8 + i] * in.z + 
             m[12 + i] * in.w;
+    }
+
     return vec4(t[0], t[1], t[2], t[3]);
 }
 
@@ -278,9 +280,11 @@ inline void mat4_transpose(const float mat[16], float result[16])
     int i, j;
 
     memcpy(tmp, mat, sizeof(tmp));
-    for(i = 0; i < 4; i++)
-        for(j = 0; j < 4; j++) 
+    for(i = 0; i < 4; i++) {
+        for(j = 0; j < 4; j++) {
             result[i + j * 4] = tmp[j + i *4] ;
+        }
+    }
 }
 
 inline int mat4_invert(const float mat[16], float inv[16])
@@ -293,20 +297,22 @@ inline int mat4_invert(const float mat[16], float inv[16])
     memcpy(hold, mat, sizeof(mat[0]) * 16);
     memcpy(inv, mat4_identity, sizeof(mat[0]) * 16);
     det = mat4_determinant(mat);
-    if(fabs(det) < EPSILON) /* singular? */
+    if(fabs(det) < EPSILON) /* singular? */ {
         return -1;
+    }
 
     rswap = 0;
     /* this loop isn't entered unless [0 + 0] > EPSILON and det > EPSILON,
          so rswap wouldn't be 0, but I initialize so as not to get warned */
     if(fabs(hold[0]) < EPSILON)
     {
-        if(fabs(hold[1]) > EPSILON)
+        if(fabs(hold[1]) > EPSILON) {
             rswap = 1;
-        else if(fabs(hold[2]) > EPSILON)
+        } else if(fabs(hold[2]) > EPSILON) {
             rswap = 2;
-        else if(fabs(hold[3]) > EPSILON)
+        } else if(fabs(hold[3]) > EPSILON) {
             rswap = 3;
+        }
 
         for(i = 0; i < 4; i++)
         {
@@ -347,10 +353,11 @@ inline int mat4_invert(const float mat[16], float inv[16])
     }
 
     if(fabs(hold[5]) < EPSILON){
-        if(fabs(hold[6]) > EPSILON)
+        if(fabs(hold[6]) > EPSILON) {
             rswap = 2;
-        else if(fabs(hold[7]) > EPSILON)
+        } else if(fabs(hold[7]) > EPSILON) {
             rswap = 3;
+        }
 
         for(i = 0; i < 4; i++)
         {
@@ -479,12 +486,14 @@ inline void mat4_mult(const float m1[16], const float m2[16], float r[16])
     float t[16];
     int i, j;
 
-    for(j = 0; j < 4; j++)
-        for(i = 0; i < 4; i++)
+    for(j = 0; j < 4; j++) {
+        for(i = 0; i < 4; i++) {
            t[i * 4 + j] = m1[i * 4 + 0] * m2[0 * 4 + j] +
                m1[i * 4 + 1] * m2[1 * 4 + j] +
                m1[i * 4 + 2] * m2[2 * 4 + j] +
                m1[i * 4 + 3] * m2[3 * 4 + j];
+        }
+    }
 
     memcpy(r, t, sizeof(t));
 }

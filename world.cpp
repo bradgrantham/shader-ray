@@ -95,14 +95,16 @@ void print_tree_stats()
         fprintf(stderr, "bvh level %2d: %6d nodes\n", i, bvh_level_counts[i]);
     }
     int largest_leaf_count = 63;
-    while((largest_leaf_count > 0) && (bvh_leaf_size_counts[largest_leaf_count]) == 0)
+    while((largest_leaf_count > 0) && (bvh_leaf_size_counts[largest_leaf_count]) == 0) {
         largest_leaf_count--;
+    }
 
     for(int i = 0; i <= largest_leaf_count; i++) {
         fprintf(stderr, "%2d objects in %6d leaves\n", i, bvh_leaf_size_counts[i]);
     }
-    if(bvh_leaf_size_counts[63] > 0)
+    if(bvh_leaf_size_counts[63] > 0) {
         fprintf(stderr, "63 or more objects in %6d leaves\n", bvh_leaf_size_counts[63]);
+    }
 }
 
 float surface_area(const vec3& boxdim)
@@ -273,8 +275,9 @@ void partition(std::vector<indexed_triangle>& triangles, int start, unsigned int
 
 
         // If there wasn't a negative triangle between s1 and s2, done
-        if(s1 >= s2)
+        if(s1 >= s2) {
             break;
+        }
 
         // s2 is now location of highest negative triangle 
         std::swap(triangles[s1], triangles[s2]);
@@ -375,8 +378,9 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
     float shininess;
 
     while(fscanf(fp,"\"%[^\"]\"", texture_name) == 1) {
-        if(strcmp(texture_name, "*") == 0)
+        if(strcmp(texture_name, "*") == 0) {
             texture_name[0] = '\0';
+        }
 
         if(fscanf(fp,"%s ", tag_name) != 1) {
             fprintf(stderr, "couldn't read tag name\n");
@@ -416,10 +420,11 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
         vertex vtx[3];
         for(int i = 0; i < 3; i++) {
             vtx[i].v = vec3(v[i][0], v[i][1], v[i][2]) * geometryScaleFactor;
-            if(correctFileColorGamma)
+            if(correctFileColorGamma) {
                 vtx[i].c.set(pow(c[i][0], screengamma), pow(c[i][1], screengamma), pow(c[i][2], screengamma));
-            else
+            } else {
                 vtx[i].c.set(c[i][0], c[i][1], c[i][2]);
+            }
             vtx[i].n.set(n[i][0], n[i][1], n[i][2]);
             vtx[i].n = normalize(vtx[i].n);
         }
@@ -585,19 +590,21 @@ void create_hitmiss(group *root, int dircode)
     while(g != NULL) {
 
         group *miss;
-        if(stack_top == -1)
+        if(stack_top == -1) {
             miss = NULL;
-        else
+        } else {
             miss = stack[stack_top];
+        }
 
         if(g->negative == NULL) {
 
             g->dirhit[dircode] = miss;
             g->dirmiss[dircode] = miss;
-            if(stack_top > -1)
+            if(stack_top > -1) {
                 g = stack[stack_top--];
-            else
+            } else {
                 g = NULL;
+            }
 
         } else {
 
