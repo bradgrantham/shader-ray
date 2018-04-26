@@ -158,8 +158,6 @@ void update_view_params(world *world, float zoom)
     create_object_matrix(world->scene_center, object_rotation, object_position, world->object_matrix, world->object_inverse, world->object_normal_matrix, world->object_normal_inverse);
 }
 
-enum render_mode_enum {CPU, OPENGL_GEOMETRY, FRAGMENT_SHADER} render_mode = FRAGMENT_SHADER;
-
 static void check_opengl(const char *filename, int line)
 {
     int glerr;
@@ -806,18 +804,8 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                 motion_target = MOVE_LIGHT;
                 break;
 
-            case 'C':
-                render_mode = CPU;
-                redraw_window = true;
-                break;
-
             case 'B':
                 do_benchmark_run = true;
-                redraw_window = true;
-                break;
-
-            case 'G':
-                render_mode = FRAGMENT_SHADER;
                 redraw_window = true;
                 break;
 
