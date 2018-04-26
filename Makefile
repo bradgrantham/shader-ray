@@ -6,17 +6,18 @@ LDFLAGS_GL	+=	-L/opt/local/lib  -lglfw -framework OpenGL -framework Cocoa -frame
 
 LDFLAGS 	+=	
 
-CXXFLAGS	+=	-Wall  $(OPTFLAGS) -I/opt/local/include/
+CXXFLAGS	+=	-Wall  -std=c++11 $(OPTFLAGS) -I/opt/local/include/
+
+SOURCES         = ray.cpp world.cpp
+
+OBJECTS         = $(SOURCES:.cpp=.o)
 
 clean:
-	rm ray
-
-world.o: world.h vectormath.h
-glesray1.o: world.h vectormath.h
+	rm ray $(OBJECTS)
 
 .cpp.o	: 
 	$(CXX) -c $(CXXFLAGS) $<
 
-ray: ray.o world.o
+ray: $(OBJECTS)
 	$(CXX) -o $@ $^ $(OPTFLAGS) $(LDFLAGS_GL)
 
