@@ -378,21 +378,21 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
         if(strcmp(texture_name, "*") == 0)
             texture_name[0] = '\0';
 
-	if(fscanf(fp,"%s ", tag_name) != 1) {
-	    fprintf(stderr, "couldn't read tag name\n");
-	    return false;
-	}
+        if(fscanf(fp,"%s ", tag_name) != 1) {
+            fprintf(stderr, "couldn't read tag name\n");
+            return false;
+        }
 
-	if(fscanf(fp,"%g %g %g %g %g ", &specular_color[0], &specular_color[1],
-	    &specular_color[2], &specular_color[3], &shininess) != 5) {
-	    fprintf(stderr, "couldn't read specular properties\n");
-	    return false;
-	}
+        if(fscanf(fp,"%g %g %g %g %g ", &specular_color[0], &specular_color[1],
+            &specular_color[2], &specular_color[3], &shininess) != 5) {
+            fprintf(stderr, "couldn't read specular properties\n");
+            return false;
+        }
 
-	if(shininess > 0 && shininess < 1) {
-	    // shininess is not exponent - what is it?
-	    shininess *= 10;
-	}
+        if(shininess > 0 && shininess < 1) {
+            // shininess is not exponent - what is it?
+            shininess *= 10;
+        }
 
         float v[3][3];
         float n[3][3];
@@ -400,15 +400,15 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
         float t[3][2];
         for(int i = 0; i < 3; i++) {
 
-	    if(fscanf(fp,"%g %g %g %g %g %g %g %g %g %g %g %g ",
-	        &v[i][0], &v[i][1], &v[i][2],
-	        &n[i][0], &n[i][1], &n[i][2],
-	        &c[i][0], &c[i][1], &c[i][2], &c[i][3],
-	        &t[i][0], &t[i][1]) != 12) {
+            if(fscanf(fp,"%g %g %g %g %g %g %g %g %g %g %g %g ",
+                &v[i][0], &v[i][1], &v[i][2],
+                &n[i][0], &n[i][1], &n[i][2],
+                &c[i][0], &c[i][1], &c[i][2], &c[i][3],
+                &t[i][0], &t[i][1]) != 12) {
 
-		fprintf(stderr, "couldn't read Vertex\n");
-		return false;
-	    }
+                fprintf(stderr, "couldn't read Vertex\n");
+                return false;
+            }
         }
 
         //MATERIAL mtl(texture_name, specular_color, shininess);

@@ -383,12 +383,12 @@ void group_intersect(highp float root, in ray theray, in range prevr, inout surf
 #ifdef CONSTANT_LENGTH_LOOPS
                 for(highp float j = 0.0; j < max_leaf_tests; j++) {
                     if(j >= gg.count)
-			break;
+                        break;
 #else
                 for(highp float j = 0.0; j < gg.count; j++) {
 #endif
-		    triangle_intersect(gg.start + j, theray, r, hit);
-		}
+                    triangle_intersect(gg.start + j, theray, r, hit);
+                }
             }
             g = gg.hit_next;
         } else {

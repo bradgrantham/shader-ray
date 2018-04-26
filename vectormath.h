@@ -243,11 +243,11 @@ inline vec4 operator*(const float m[16], const vec4& in)
     float t[4];
 
     for(i = 0; i < 4; i++)
-	t[i] =
-	    m[0 + i] * in.x + 
-	    m[4 + i] * in.y + 
-	    m[8 + i] * in.z + 
-	    m[12 + i] * in.w;
+        t[i] =
+            m[0 + i] * in.x + 
+            m[4 + i] * in.y + 
+            m[8 + i] * in.z + 
+            m[12 + i] * in.w;
     return vec4(t[0], t[1], t[2], t[3]);
 }
 
@@ -261,15 +261,15 @@ inline float mat4_determinant(const float mat[16])
     return (mat[0] * mat[5] - mat[1] * mat[4]) *
         (mat[10] * mat[15] - mat[11] * mat[14]) + 
         (mat[2] * mat[4] - mat[0] * mat[6]) *
-	(mat[9] * mat[15] - mat[11] * mat[13]) + 
+        (mat[9] * mat[15] - mat[11] * mat[13]) + 
         (mat[0] * mat[7] - mat[3] * mat[4]) *
-	(mat[9] * mat[14] - mat[10] * mat[13]) + 
+        (mat[9] * mat[14] - mat[10] * mat[13]) + 
         (mat[1] * mat[6] - mat[2] * mat[5]) *
-	(mat[8] * mat[15] - mat[11] * mat[12]) + 
+        (mat[8] * mat[15] - mat[11] * mat[12]) + 
         (mat[3] * mat[5] - mat[1] * mat[7]) *
-	(mat[8] * mat[14] - mat[10] * mat[12]) + 
+        (mat[8] * mat[14] - mat[10] * mat[12]) + 
         (mat[2] * mat[7] - mat[3] * mat[6]) *
-	(mat[8] * mat[13] - mat[9] * mat[12]);
+        (mat[8] * mat[13] - mat[9] * mat[12]);
 }
 
 inline void mat4_transpose(const float mat[16], float result[16])
@@ -279,37 +279,37 @@ inline void mat4_transpose(const float mat[16], float result[16])
 
     memcpy(tmp, mat, sizeof(tmp));
     for(i = 0; i < 4; i++)
-	for(j = 0; j < 4; j++) 
-	    result[i + j * 4] = tmp[j + i *4] ;
+        for(j = 0; j < 4; j++) 
+            result[i + j * 4] = tmp[j + i *4] ;
 }
 
 inline int mat4_invert(const float mat[16], float inv[16])
 {
-    int		i, rswap;
-    float	det, div, swap;
-    float	hold[16];
+    int         i, rswap;
+    float       det, div, swap;
+    float       hold[16];
     const float EPSILON = .00001;
 
     memcpy(hold, mat, sizeof(mat[0]) * 16);
     memcpy(inv, mat4_identity, sizeof(mat[0]) * 16);
     det = mat4_determinant(mat);
     if(fabs(det) < EPSILON) /* singular? */
-	return -1;
+        return -1;
 
     rswap = 0;
     /* this loop isn't entered unless [0 + 0] > EPSILON and det > EPSILON,
-	 so rswap wouldn't be 0, but I initialize so as not to get warned */
+         so rswap wouldn't be 0, but I initialize so as not to get warned */
     if(fabs(hold[0]) < EPSILON)
     {
         if(fabs(hold[1]) > EPSILON)
             rswap = 1;
         else if(fabs(hold[2]) > EPSILON)
-	    rswap = 2;
+            rswap = 2;
         else if(fabs(hold[3]) > EPSILON)
-	    rswap = 3;
+            rswap = 3;
 
         for(i = 0; i < 4; i++)
-	{
+        {
             swap = hold[i * 4 + 0];
             hold[i * 4 + 0] = hold[i * 4 + rswap];
             hold[i * 4 + rswap] = swap;
@@ -348,12 +348,12 @@ inline int mat4_invert(const float mat[16], float inv[16])
 
     if(fabs(hold[5]) < EPSILON){
         if(fabs(hold[6]) > EPSILON)
-	    rswap = 2;
+            rswap = 2;
         else if(fabs(hold[7]) > EPSILON)
-	    rswap = 3;
+            rswap = 3;
 
         for(i = 0; i < 4; i++)
-	{
+        {
             swap = hold[i * 4 + 1];
             hold[i * 4 + 1] = hold[i * 4 + rswap];
             hold[i * 4 + rswap] = swap;
@@ -392,7 +392,7 @@ inline int mat4_invert(const float mat[16], float inv[16])
 
     if(fabs(hold[10]) < EPSILON){
         for(i = 0; i < 4; i++)
-	{
+        {
             swap = hold[i * 4 + 2];
             hold[i * 4 + 2] = hold[i * 4 + 3];
             hold[i * 4 + 3] = swap;
@@ -480,11 +480,11 @@ inline void mat4_mult(const float m1[16], const float m2[16], float r[16])
     int i, j;
 
     for(j = 0; j < 4; j++)
-	for(i = 0; i < 4; i++)
+        for(i = 0; i < 4; i++)
            t[i * 4 + j] = m1[i * 4 + 0] * m2[0 * 4 + j] +
-	       m1[i * 4 + 1] * m2[1 * 4 + j] +
-	       m1[i * 4 + 2] * m2[2 * 4 + j] +
-	       m1[i * 4 + 3] * m2[3 * 4 + j];
+               m1[i * 4 + 1] * m2[1 * 4 + j] +
+               m1[i * 4 + 2] * m2[2 * 4 + j] +
+               m1[i * 4 + 3] * m2[3 * 4 + j];
 
     memcpy(r, t, sizeof(t));
 }
@@ -498,22 +498,22 @@ inline void mat4_get_rotation(const float m[16], float r[4])
 
     if(cosine > 1.0){
 #if defined(DEBUG)
-	fprintf(stderr, "XXX acos of greater than 1! (clamped)\n");
+        fprintf(stderr, "XXX acos of greater than 1! (clamped)\n");
 #endif // DEBUG
-	cosine = 1.0;
+        cosine = 1.0;
     }
     if(cosine < -1.0){
 #if defined(DEBUG)
-	fprintf(stderr, "XXX acos of less than -1! (clamped)\n");
+        fprintf(stderr, "XXX acos of less than -1! (clamped)\n");
 #endif // DEBUG
-	cosine = -1.0;
+        cosine = -1.0;
     }
 
     r[0] = (float)acos(cosine);
 
 #if defined(DEBUG)
     if(r[0] != r[0]) /* isNAN */
-	abort();
+        abort();
 #endif // DEBUG
 
     r[1] = (m[6] - m[9]);
@@ -521,8 +521,8 @@ inline void mat4_get_rotation(const float m[16], float r[4])
     r[3] = (m[1] - m[4]);
 
     d = sqrt(r[1] * r[1] +
-	r[2] * r[2] +
-	r[3] * r[3]);
+        r[2] * r[2] +
+        r[3] * r[3]);
 
     r[1] /= d;
     r[2] /= d;
