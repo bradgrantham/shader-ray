@@ -177,7 +177,7 @@ static bool CheckShaderCompile(GLuint shader, const std::string& shader_name)
     int status;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if(status == GL_TRUE)
-	return true;
+        return true;
 
     if(gPrintShaderLog) {
         int length;
@@ -204,7 +204,7 @@ static bool CheckProgramLink(GLuint program)
     int status;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if(status == GL_TRUE)
-	return true;
+        return true;
 
     if(gPrintShaderLog) {
         int log_length;
@@ -393,7 +393,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     glShaderSource(raytracer_gl.fragment_shader, 3, strings, NULL);
     glCompileShader(raytracer_gl.fragment_shader);
     if(!CheckShaderCompile(raytracer_gl.fragment_shader, "ray tracer fragment shader"))
-	exit(1);
+        exit(1);
 
     strings[0] = version;
     strings[1] = preamble;
@@ -402,7 +402,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     glShaderSource(raytracer_gl.vertex_shader, 3, strings, NULL);
     glCompileShader(raytracer_gl.vertex_shader);
     if(!CheckShaderCompile(raytracer_gl.vertex_shader, "ray tracer vertex shader"))
-	exit(1);
+        exit(1);
 
     raytracer_gl.program = glCreateProgram();
     glAttachShader(raytracer_gl.program, raytracer_gl.vertex_shader);
@@ -411,7 +411,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     glBindAttribLocation(raytracer_gl.program, texcoord_attrib, "vtex");
     glLinkProgram(raytracer_gl.program);
     if(!CheckProgramLink(raytracer_gl.program))
-	exit(1);
+        exit(1);
 
     glUseProgram(raytracer_gl.program);
     check_opengl(__FILE__, __LINE__);
@@ -722,41 +722,41 @@ int screenshot(const char *colorName, const char *alphaName)
 
     glGetIntegerv(GL_VIEWPORT, viewport);
     if(pixelsSize < (unsigned int)(viewport[2] * viewport[3] * 3)) {
-	pixelsSize = (unsigned int)(viewport[2] * viewport[3] * 3);
-	pixels = (unsigned char *)realloc(pixels, pixelsSize);
-	if(pixels == NULL) {
-	    fprintf(stderr, "snapshot: couldn't allocate %zd bytes for"
-		" screenshot.\n", pixelsSize);
-	    return -1;
-	}
+        pixelsSize = (unsigned int)(viewport[2] * viewport[3] * 3);
+        pixels = (unsigned char *)realloc(pixels, pixelsSize);
+        if(pixels == NULL) {
+            fprintf(stderr, "snapshot: couldn't allocate %zd bytes for"
+                " screenshot.\n", pixelsSize);
+            return -1;
+        }
     }
 
-	/* color ---------------------------------------- */
+        /* color ---------------------------------------- */
     if(colorName != NULL) {
-	if((fp = fopen(colorName, "wb")) == NULL) {
-	    fprintf(stderr, "snapshot: couldn't open \"%s\".\n", colorName);
-	    return -1;
-	}
-	glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
-	    GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	fprintf(fp, "P6 %d %d 255\n", viewport[2], viewport[3]);
-	for(i = viewport[3] - 1; i >= 0; i--)
-	    fwrite(pixels + viewport[2] * 3 * i, 3, viewport[2], fp);
-	fclose(fp);
+        if((fp = fopen(colorName, "wb")) == NULL) {
+            fprintf(stderr, "snapshot: couldn't open \"%s\".\n", colorName);
+            return -1;
+        }
+        glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
+            GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        fprintf(fp, "P6 %d %d 255\n", viewport[2], viewport[3]);
+        for(i = viewport[3] - 1; i >= 0; i--)
+            fwrite(pixels + viewport[2] * 3 * i, 3, viewport[2], fp);
+        fclose(fp);
     }
 
-	/* alpha ---------------------------------------- */
+        /* alpha ---------------------------------------- */
     if(alphaName != NULL) {
-	if((fp = fopen(alphaName, "wb")) == NULL) {
-	    fprintf(stderr, "snapshot: couldn't open \"%s\".\n", alphaName);
-	    return -1;
-	}
-	glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
-	    GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-	fprintf(fp, "P5 %d %d 255\n", viewport[2], viewport[3]);
-	for(i = viewport[3] - 1; i >= 0; i--)
-	    fwrite(pixels + viewport[2] * i, 1, viewport[2], fp);
-	fclose(fp);
+        if((fp = fopen(alphaName, "wb")) == NULL) {
+            fprintf(stderr, "snapshot: couldn't open \"%s\".\n", alphaName);
+            return -1;
+        }
+        glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3],
+            GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
+        fprintf(fp, "P5 %d %d 255\n", viewport[2], viewport[3]);
+        for(i = viewport[3] - 1; i >= 0; i--)
+            fwrite(pixels + viewport[2] * i, 1, viewport[2], fp);
+        fclose(fp);
     }
 
     glReadBuffer(prevReadBuf);
@@ -855,8 +855,8 @@ static void ButtonCallback(GLFWwindow *window, int b, int action, int mods)
     if(b == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
         button_pressed = 1;
         shift_pressed = mods & GLFW_MOD_SHIFT;
-	ox = x;
-	oy = y;
+        ox = x;
+        oy = y;
         redraw_window = true;
     } else {
         button_pressed = -1;
