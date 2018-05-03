@@ -15,16 +15,16 @@ class Obj
 {
     struct Face
     {
+        // Strictly speaking these should be signed as face descriptions
+        // can be relative (negative).
+        struct VertexIndex
+        {
+            unsigned int v;
+            unsigned int vn;
+            unsigned int vt;
+        };
         unsigned int which_attribs;
-        unsigned int v0;
-        unsigned int v1;
-        unsigned int v2;
-        unsigned int vn0;
-        unsigned int vn1;
-        unsigned int vn2;
-        unsigned int vt0;
-        unsigned int vt1;
-        unsigned int vt2;
+        std::vector<VertexIndex> indices;
     };
 
     void get_attrib(const std::string& description, vec3& v);

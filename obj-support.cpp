@@ -90,27 +90,36 @@ void Obj::compute_normals()
 
     for (auto & face : faces)
     {
-        // Compute the area-weighted face normal for this face
-        vec3& v0 = positions[face.v0];
-        vec3& v1 = positions[face.v1];
-        vec3& v2 = positions[face.v2];
-        vec3 fn = cross(v1 - v0, v2 - v0);
-        float area = 0.5 * sqrt(dot(fn, fn));
-        fn = fn * area;
+        const unsigned int idx0 = 0;
+        unsigned int idx1 = 1;
+        unsigned int idx2 = 2;
+        Face::VertexIndex& vi0 = face.indices[idx0];
+        const unsigned int numTris = face.indices.size() - 2;
+        for (unsigned int t = 0; t < numTris; ++t, ++idx1, ++idx2)
+        {
+            Face::VertexIndex& vi1 = face.indices[idx1];
+            Face::VertexIndex& vi2 = face.indices[idx2];
 
-        // Accumulate the per-vertex contribution of the normal
-        face.which_attribs |= FACE_ATTRIB_NORMAL;
-        face.vn0 = face.v0;
-        face.vn1 = face.v1;
-        face.vn2 = face.v2;
+            // Compute the area-weighted face normal for this face
+            vec3& v0 = positions[vi0.v];
+            vec3& v1 = positions[vi1.v];
+            vec3& v2 = positions[vi2.v];
+            vec3 fn = cross(v1 - v0, v2 - v0);
 
-        vec3& vn0 = normals[face.vn0];
-        vec3& vn1 = normals[face.vn1];
-        vec3& vn2 = normals[face.vn2];
+            // Accumulate the per-vertex contribution of the normal
+            face.which_attribs |= FACE_ATTRIB_NORMAL;
+            vi0.vn = vi0.v;
+            vi1.vn = vi1.v;
+            vi2.vn = vi2.v;
 
-        vn0 = vn0 + fn;
-        vn1 = vn1 + fn;
-        vn2 = vn2 + fn;
+            vec3& vn0 = normals[vi0.vn];
+            vec3& vn1 = normals[vi1.vn];
+            vec3& vn2 = normals[vi2.vn];
+
+            vn0 = vn0 + fn;
+            vn1 = vn1 + fn;
+            vn2 = vn2 + fn;
+        }
     }
 
     for (auto & normal : normals)
@@ -156,21 +165,24 @@ void Obj::face_get_index(const std::string& tuple, unsigned int& which_attribs,
         return;
     }
 
+    // However we end up stashing face information, it is important to account
+    // for the fact that OBJ models have a base 1 (rather than base 0) index
+    // enumeration, so each index needs to have 1 subtracted.
     which_attribs |= FACE_ATTRIB_POSITION;
-    v = fromString<unsigned int>(elements[0]);
+    v = fromString<unsigned int>(elements[0]) - 1;
 
     unsigned int numElements = elements.size();
 
     if (numElements > 1 && !elements[1].empty())
     {
         which_attribs |= FACE_ATTRIB_TEXCOORD;
-        vt = fromString<unsigned int>(elements[1]);
+        vt = fromString<unsigned int>(elements[1]) - 1;
     }
 
     if (numElements > 2 && !elements[2].empty())
     {
         which_attribs |= FACE_ATTRIB_NORMAL;
-        vn = fromString<unsigned int>(elements[2]);
+        vn = fromString<unsigned int>(elements[2]) - 1;
     }
 }
 
@@ -182,40 +194,16 @@ void Obj::get_face(const std::string& description, Face& f)
     split_tuple_fuzzy(description, ' ', elements);
 
     unsigned int which_attribs(FACE_ATTRIB_NONE);
-    unsigned int v0(0);
-    unsigned int vt0(0);
-    unsigned int vn0(0);
-    face_get_index(elements[0], which_attribs, v0, vn0, vt0);
+    const unsigned int numElements = elements.size();
+    f.indices.reserve(numElements);
+    for (unsigned int i = 0; i < numElements; i++)
+    {
+        Face::VertexIndex vi = {0};
+        face_get_index(elements[i], which_attribs, vi.v, vi.vn, vi.vt);
+        f.indices.push_back(vi);
+    }
 
-    unsigned int v1(0);
-    unsigned int vt1(0);
-    unsigned int vn1(0);
-    face_get_index(elements[1], which_attribs, v1, vn1, vt1);
- 
-    unsigned int v2(0);
-    unsigned int vt2(0);
-    unsigned int vn2(0);
-    face_get_index(elements[2], which_attribs, v2, vn2, vt2);
-
-    // However we end up stashing face information, it is important to account
-    // for the fact that OBJ models have a base 1 (rather than base 0) index
-    // enumeration, so each index needs to have 1 subtracted.
     f.which_attribs = which_attribs;
-    f.v0 = v0 - 1;
-    f.v1 = v1 - 1;
-    f.v2 = v2 - 1;
-    if (which_attribs & FACE_ATTRIB_NORMAL)
-    {
-        f.vn0 = vn0 - 1;
-        f.vn1 = vn1 - 1;
-        f.vn2 = vn2 - 1;
-    }
-    if (which_attribs & FACE_ATTRIB_TEXCOORD)
-    {
-        f.vt0 = vt0 - 1;
-        f.vt1 = vt1 - 1;
-        f.vt2 = vt2 - 1;
-    }
 }
 
 bool Obj::load_object_from_file(const std::string& filename)
@@ -239,10 +227,16 @@ bool Obj::load_object_from_file(const std::string& filename)
     // Process the input source and generate lists of attributes and faces
     for (auto & lineIt : sourceLines)
     {
+        const std::string& curDesc = lineIt;
+        if (curDesc.empty() || curDesc[0] == '#')
+        {
+            // Skip blank lines and comments
+            continue;
+        }
+
         // Find what sort of description we're looking at on the current line
         // We are currently ignoring everything other than vertex attributes
         // and face descriptions.
-        const std::string& curDesc = lineIt;
         std::string::size_type startPos(0);
         std::string::size_type spacePos = curDesc.find(" ", startPos);
         std::string::size_type numChars(std::string::npos);
@@ -254,7 +248,7 @@ bool Obj::load_object_from_file(const std::string& filename)
             description = std::string(curDesc, descPos);
             numChars = spacePos - startPos;
         }
-        std::string descriptionType(curDesc, startPos, numChars);
+        const std::string descriptionType(curDesc, startPos, numChars);
 
         if (descriptionType == object_description)
         {
@@ -284,10 +278,6 @@ bool Obj::load_object_from_file(const std::string& filename)
             get_face(description, f);
             faces.push_back(f);
         }
-        else
-        {
-            std::cout << "Unrecognized description '" << description << "'" << std::endl;
-        }
     }
 
     std::cout << "Got " << faces.size() << " face descriptions" << std::endl;
@@ -313,21 +303,30 @@ bool Obj::load_object_from_file(const std::string& filename)
 bool Obj::fill_triangle_set(triangle_set& triangles)
 {
     // Convert from face-vertex mesh to list of triangles
-    for (auto & faceIt : faces)
+    for (auto & face : faces)
     {
-        const Face& face = faceIt;
-        vertex vtx[3];
-        vtx[0].v = positions[face.v0];
-        vtx[1].v = positions[face.v1];
-        vtx[2].v = positions[face.v2];
-        if (face.which_attribs & FACE_ATTRIB_NORMAL)
+        const unsigned int idx0 = 0;
+        unsigned int idx1 = 1;
+        unsigned int idx2 = 2;
+        const Face::VertexIndex& vi0 = face.indices[idx0];
+        const unsigned int numTris = face.indices.size() - 2;
+        for (unsigned int t = 0; t < numTris; ++t, ++idx1, ++idx2)
         {
-            vtx[0].n = normals[face.vn0];
-            vtx[1].n = normals[face.vn1];
-            vtx[2].n = normals[face.vn2];
+            const Face::VertexIndex& vi1 = face.indices[idx1];
+            const Face::VertexIndex& vi2 = face.indices[idx2];
+            vertex vtx[3];
+            vtx[0].v = positions[vi0.v];
+            vtx[1].v = positions[vi1.v];
+            vtx[2].v = positions[vi2.v];
+            if (face.which_attribs & FACE_ATTRIB_NORMAL)
+            {
+                vtx[0].n = normals[vi0.vn];
+                vtx[1].n = normals[vi1.vn];
+                vtx[2].n = normals[vi2.vn];
+            }
+            vtx[0].c = vtx[1].c = vtx[2].c = vec3(1.0, 1.0, 1.0);
+            triangles.add(vtx[0], vtx[1], vtx[2]);
         }
-        vtx[0].c = vtx[1].c = vtx[2].c = vec3(1.0, 1.0, 1.0);
-        triangles.add(vtx[0], vtx[1], vtx[2]);
     }
 
     return true;
