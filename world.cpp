@@ -11,6 +11,7 @@
 #include <thread>
 #include <sys/time.h>
 #include "world.h"
+#include "obj-support.h"
 
 group::group(triangle_set& triangles_, group *neg, group *pos, const vec3& direction, const box3d& box_) :
     D(direction),
@@ -433,20 +434,37 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
     return true;
 }
 
+#define TRISRC_LOADER
+
 world *load_world(char *fname) // Get world and return pointer.
 {
     timeval t1, t2;
     std::auto_ptr<world> w(new world);
 
+#ifdef TRISRC_LOADER
     scoped_FILE fp(fopen(fname, "r"));
     if(fp == NULL) {
         fprintf(stderr, "Cannot open file %s for input.\nE#%d\n", fname, errno);
         return NULL;
     }
+#else // OBJ_LOADER
+    std::string filename(fname);
+    Obj obj;
+    if (!obj.load_object_from_file(filename))
+    {
+        fprintf(stderr, "Cannot open file '%s' for input.\nE#%d\n", fname, errno);
+        return nullptr;
+    }
+#endif // TRISRC_LOADER
+
     w->background.set(.2, .2, .2);
 
     gettimeofday(&t1, NULL);
+#ifdef TRISRC_LOADER
     bool success = ParseTriSrc(fp, w->triangles);
+#else // OBJ_LOADER
+    bool success = obj.fill_triangle_set(w->triangles);
+#endif // TRISRC_LOADER
     if(!success) {
         fprintf(stderr, "Couldn't parse triangles from file.\n");
         return NULL;
