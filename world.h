@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vectormath.h"
 #include <algorithm>
 #include <vector>
