@@ -184,13 +184,13 @@ static bool CheckShaderCompile(GLuint shader, const std::string& shader_name)
         fprintf(stderr, "shader text:\n");
         glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &length);
         char source[length];
-        glGetShaderSource(shader, length, NULL, source);
+        glGetShaderSource(shader, length, nullptr, source);
         fprintf(stderr, "%s\n", source);
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
 
         if (length > 0) {
             char log[length];
-            glGetShaderInfoLog(shader, length, NULL, log);
+            glGetShaderInfoLog(shader, length, nullptr, log);
             fprintf(stderr, "\nshader error log:\n%s\n", log);
         }
 
@@ -212,7 +212,7 @@ static bool CheckProgramLink(GLuint program)
 
         if (log_length > 0) {
             char log[log_length];
-            glGetProgramInfoLog(program, log_length, NULL, log);
+            glGetProgramInfoLog(program, log_length, nullptr, log);
             fprintf(stderr, "program error log: %s\n",log);
         }
     }
@@ -229,15 +229,15 @@ inline T round_up(T v, unsigned int r)
 
 static char *load_text(FILE *fp)
 {
-    char *text = NULL;
+    char *text = nullptr;
     char line[1024];
     int newsize;
 
     text = strdup("");
-    while(fgets(line, 1023, fp) != NULL) {
+    while(fgets(line, 1023, fp) != nullptr) {
         newsize = round_up(strlen(text) + strlen(line) + 1, 65536);
         text = (char *)realloc(text,  newsize);
-        if(text == NULL) {
+        if(text == nullptr) {
             fprintf(stderr, "loadShader: Couldn't realloc program string to"
                 " add more characters\n");
             exit(EXIT_FAILURE);
@@ -343,14 +343,14 @@ int new_data_texture()
 void load_scene_data(world *w, raytracer_gl_binding &binding)
 {
     const char *filename;
-    if(getenv("SHADER") != NULL) {
+    if(getenv("SHADER") != nullptr) {
         filename = getenv("SHADER");
     } else {
         filename = "raytracer.es.fs";
     }
 
     FILE *fp = fopen(filename, "r");
-    if(fp == NULL) {
+    if(fp == nullptr) {
         fprintf(stderr, "couldn't open raytracer.fs\n");
         exit(EXIT_FAILURE);
     }
@@ -358,7 +358,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     fclose(fp);
 
     fp = fopen("raytracer.vs", "r");
-    if(fp == NULL) {
+    if(fp == nullptr) {
         fprintf(stderr, "couldn't open raytracer.vs\n");
         exit(EXIT_FAILURE);
     }
@@ -392,7 +392,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     strings[2] = gRayTracingFragmentShaderText;
 
     raytracer_gl.fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(raytracer_gl.fragment_shader, 3, strings, NULL);
+    glShaderSource(raytracer_gl.fragment_shader, 3, strings, nullptr);
     glCompileShader(raytracer_gl.fragment_shader);
     if(!CheckShaderCompile(raytracer_gl.fragment_shader, "ray tracer fragment shader")) {
         exit(1);
@@ -402,7 +402,7 @@ void load_scene_data(world *w, raytracer_gl_binding &binding)
     strings[1] = preamble;
     strings[2] = gRayTracingVertexShaderText;
     raytracer_gl.vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(raytracer_gl.vertex_shader, 3, strings, NULL);
+    glShaderSource(raytracer_gl.vertex_shader, 3, strings, nullptr);
     glCompileShader(raytracer_gl.vertex_shader);
     if(!CheckShaderCompile(raytracer_gl.vertex_shader, "ray tracer vertex shader")) {
         exit(1);
@@ -697,7 +697,7 @@ void DrawFrame(GLFWwindow *window)
     check_opengl(__FILE__, __LINE__);
 
     timeval now;
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, nullptr);
     //long long micros = (now.tv_sec - prev_frame_time.tv_sec) * 1000000 + now.tv_usec - prev_frame_time.tv_usec;
     // printf("fps: %f (estimated %lld millis)\n", 1000000.0 / micros, micros / 1000);
     prev_frame_time = now;
@@ -731,7 +731,7 @@ int screenshot(const char *colorName, const char *alphaName)
     if(pixelsSize < (unsigned int)(viewport[2] * viewport[3] * 3)) {
         pixelsSize = (unsigned int)(viewport[2] * viewport[3] * 3);
         pixels = (unsigned char *)realloc(pixels, pixelsSize);
-        if(pixels == NULL) {
+        if(pixels == nullptr) {
             fprintf(stderr, "snapshot: couldn't allocate %zd bytes for"
                 " screenshot.\n", pixelsSize);
             return -1;
@@ -739,8 +739,8 @@ int screenshot(const char *colorName, const char *alphaName)
     }
 
         /* color ---------------------------------------- */
-    if(colorName != NULL) {
-        if((fp = fopen(colorName, "wb")) == NULL) {
+    if(colorName != nullptr) {
+        if((fp = fopen(colorName, "wb")) == nullptr) {
             fprintf(stderr, "snapshot: couldn't open \"%s\".\n", colorName);
             return -1;
         }
@@ -754,8 +754,8 @@ int screenshot(const char *colorName, const char *alphaName)
     }
 
         /* alpha ---------------------------------------- */
-    if(alphaName != NULL) {
-        if((fp = fopen(alphaName, "wb")) == NULL) {
+    if(alphaName != nullptr) {
+        if((fp = fopen(alphaName, "wb")) == nullptr) {
             fprintf(stderr, "snapshot: couldn't open \"%s\".\n", alphaName);
             return -1;
         }
@@ -821,7 +821,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                 break;
 
             case 'S':
-                screenshot("color.ppm", NULL);
+                screenshot("color.ppm", nullptr);
                 break;
 
             case 'P':
@@ -953,7 +953,7 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
 
-    window = glfwCreateWindow(512, 512, "ray1 interactive program", NULL, NULL);
+    window = glfwCreateWindow(512, 512, "ray1 interactive program", nullptr, nullptr);
     glfwGetFramebufferSize(window, &gWindowWidth, &gWindowHeight);
     if (!window) {
         glfwTerminate();
@@ -980,7 +980,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    if((gWorld = load_world(argv[1])) == NULL) {
+    if((gWorld = load_world(argv[1])) == nullptr) {
         fprintf(stderr, "Cannot set up world.\n");
         exit(EXIT_FAILURE);
     }
@@ -1075,7 +1075,7 @@ int main(int argc, char *argv[])
     update_light();
 
     init();
-    gettimeofday(&prev_frame_time, NULL);
+    gettimeofday(&prev_frame_time, nullptr);
 
     redraw_window = true;
     while (!glfwWindowShouldClose(window)) {
@@ -1090,12 +1090,12 @@ int main(int argc, char *argv[])
             timeval tv;
 
             for(int i = 0; i < frame_count; i++) {
-                gettimeofday(&tv, NULL);
+                gettimeofday(&tv, nullptr);
                 usec_t then = tv.tv_sec * 1000000 + tv.tv_usec;
                 DrawFrame(window);
                 // glFinish();
                 glfwSwapBuffers(window);
-                gettimeofday(&tv, NULL);
+                gettimeofday(&tv, nullptr);
                 usec_t now = tv.tv_sec * 1000000 + tv.tv_usec;
                 usec_t duration = now - then;
                 frame_durations[i] = duration;

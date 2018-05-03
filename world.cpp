@@ -25,8 +25,8 @@ group::group(triangle_set& triangles_, group *neg, group *pos, const vec3& direc
 }
 
 group::group(triangle_set& triangles_, int start_, unsigned int count_) :
-    negative(NULL),
-    positive(NULL),
+    negative(nullptr),
+    positive(nullptr),
     triangles(triangles_),
     start(start_),
     count(count_)
@@ -294,11 +294,11 @@ void partition(std::vector<indexed_triangle>& triangles, int start, unsigned int
 group* make_tree(triangle_set& triangles, int start, unsigned int count, int level = 0)
 {
     if(level == 0) {
-        previous = time(NULL);
+        previous = time(nullptr);
     }
-    if(time(NULL) > previous) {
+    if(time(nullptr) > previous) {
         fprintf(stderr, "total treed = %d\n", total_treed);
-        previous = time(NULL);
+        previous = time(nullptr);
     }
 
     if((level >= bvh_max_depth) || count <= bvh_leaf_max) {
@@ -346,7 +346,7 @@ group* make_tree(triangle_set& triangles, int start, unsigned int count, int lev
 
         // construct children
         group *g1 = make_tree(triangles, startA, countA, level + 1);
-        g = new group(triangles, g1, NULL, split_plane_normal, vertexbox);
+        g = new group(triangles, g1, nullptr, split_plane_normal, vertexbox);
         group *g2 = make_tree(triangles, startB, countB, level + 1);
         g->positive = g2;
         bvh_level_counts[level]++;
@@ -443,9 +443,9 @@ world *load_world(char *fname) // Get world and return pointer.
 
 #ifdef TRISRC_LOADER
     scoped_FILE fp(fopen(fname, "r"));
-    if(fp == NULL) {
+    if(fp == nullptr) {
         fprintf(stderr, "Cannot open file %s for input.\nE#%d\n", fname, errno);
-        return NULL;
+        return nullptr;
     }
 #else // OBJ_LOADER
     std::string filename(fname);
@@ -459,7 +459,7 @@ world *load_world(char *fname) // Get world and return pointer.
 
     w->background.set(.2, .2, .2);
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, nullptr);
 #ifdef TRISRC_LOADER
     bool success = ParseTriSrc(fp, w->triangles);
 #else // OBJ_LOADER
@@ -467,9 +467,9 @@ world *load_world(char *fname) // Get world and return pointer.
 #endif // TRISRC_LOADER
     if(!success) {
         fprintf(stderr, "Couldn't parse triangles from file.\n");
-        return NULL;
+        return nullptr;
     }
-    gettimeofday(&t2, NULL);
+    gettimeofday(&t2, nullptr);
     long long micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
     fprintf(stderr, "Parsing: %f seconds\n", micros / 1000000.0);
 
@@ -478,7 +478,7 @@ world *load_world(char *fname) // Get world and return pointer.
     fprintf(stderr, "%zd independent vertices.\n", w->triangles.vertices.size());
     fprintf(stderr, "%.2f vertices per triangle.\n", w->triangles.vertices.size() * 1.0 / w->triangle_count);
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, nullptr);
 
     w->scene_center = w->triangles.box.center();
 
@@ -493,13 +493,13 @@ world *load_world(char *fname) // Get world and return pointer.
     }
     w->scene_extent = sqrtf(scene_extent_squared) * 2;
 
-    gettimeofday(&t2, NULL);
+    gettimeofday(&t2, nullptr);
     micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
     fprintf(stderr, "Finding scene center and extent: %f seconds\n", micros / 1000000.0);
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, nullptr);
     w->root = make_tree(w->triangles, 0, w->triangle_count);
-    gettimeofday(&t2, NULL);
+    gettimeofday(&t2, nullptr);
 
     micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
     fprintf(stderr, "BVH: %f seconds\n", micros / 1000000.0);
@@ -512,7 +512,7 @@ world *load_world(char *fname) // Get world and return pointer.
 int get_node_count(group *g)
 {
     int count = 1;
-    if(g->negative != NULL) {
+    if(g->negative != nullptr) {
         count += get_node_count(g->negative) + get_node_count(g->positive);
     }
     return count;
@@ -525,7 +525,7 @@ void generate_group_indices(group *g, int starting, int *used_, int max, int row
     int mine;
     int used;
 
-    if(g->negative != NULL) {
+    if(g->negative != nullptr) {
 
         int neg_used;
         int pos_used;
@@ -563,7 +563,7 @@ void store_group_data(group *g, scene_shader_data &data)
     data.group_boxmax[mine * 3 + 1] = g->box.boxmax.y;
     data.group_boxmax[mine * 3 + 2] = g->box.boxmax.z;
 
-    if(g->negative != NULL) {
+    if(g->negative != nullptr) {
 
         store_group_data(g->negative, data);
         store_group_data(g->positive, data);
@@ -605,23 +605,23 @@ void create_hitmiss(group *root, int dircode)
     group *g = root;
     int stack_top = -1;
 
-    while(g != NULL) {
+    while(g != nullptr) {
 
         group *miss;
         if(stack_top == -1) {
-            miss = NULL;
+            miss = nullptr;
         } else {
             miss = stack[stack_top];
         }
 
-        if(g->negative == NULL) {
+        if(g->negative == nullptr) {
 
             g->dirhit[dircode] = miss;
             g->dirmiss[dircode] = miss;
             if(stack_top > -1) {
                 g = stack[stack_top--];
             } else {
-                g = NULL;
+                g = nullptr;
             }
 
         } else {
@@ -649,7 +649,7 @@ void store_hitmiss(group *g, scene_shader_data& data, int dircode, int base)
 {
     data.group_hitmiss[(base + g->my_index) * 2 + 0] = g->dirhit[dircode] ? g->dirhit[dircode]->my_index : 0x7fffffffU;
     data.group_hitmiss[(base + g->my_index) * 2 + 1] = g->dirmiss[dircode] ? g->dirmiss[dircode]->my_index : 0x7fffffffU;
-    if(g->negative != NULL) {
+    if(g->negative != nullptr) {
         store_hitmiss(g->negative, data, dircode, base);
         store_hitmiss(g->positive, data, dircode, base);
     }
@@ -665,7 +665,7 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 {
     unsigned int size;
     timeval t1, t2;
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, nullptr);
 
     data.vertex_count = w->triangles.triangles.size() * 3;
     data.vertex_data_rows = (data.vertex_count + data_texture_width - 1) / data_texture_width;
@@ -700,11 +700,11 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 
     store_group_data(w->root, data);
 
-    gettimeofday(&t1, NULL);
+    gettimeofday(&t1, nullptr);
     for(int i = 0; i < 8; i++) {
         create_hitmiss(w->root, i); 
     }
-    gettimeofday(&t2, NULL);
+    gettimeofday(&t2, nullptr);
 
     long long micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
     fprintf(stderr, "hitmiss: %f seconds\n", micros / 1000000.0);
@@ -715,15 +715,15 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 }
 
 scene_shader_data::scene_shader_data() :
-    vertex_positions(NULL),
-    vertex_colors(NULL),
-    vertex_normals(NULL),
-    group_boxmin(NULL),
-    group_boxmax(NULL),
-    group_directions(NULL),
-    group_children(NULL),
-    group_hitmiss(NULL),
-    group_objects(NULL)
+    vertex_positions(nullptr),
+    vertex_colors(nullptr),
+    vertex_normals(nullptr),
+    group_boxmin(nullptr),
+    group_boxmax(nullptr),
+    group_directions(nullptr),
+    group_children(nullptr),
+    group_hitmiss(nullptr),
+    group_objects(nullptr)
 {
 }
 
