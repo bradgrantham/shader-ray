@@ -7,8 +7,9 @@
 #include <memory>
 #include <limits>
 #include <string>
-#include <stdint.h>
 #include <thread>
+#include <iostream>
+#include <cstdint>
 #include <sys/time.h>
 #include "world.h"
 #include "obj-support.h"
@@ -434,25 +435,33 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
     return true;
 }
 
-#define TRISRC_LOADER
+#if 0
+    int index = filename.find_last_of(".");
+    string extension = filename.substr(index + 1);
 
-world *load_world(char *fname) // Get world and return pointer.
+    if(extension == "trisrc") {
+    } else if(extension == "obj") {
+    } else {
+        cerr << "This program doesn't know how to load a file with extension " + extesion
+    }
+#endif
+
+world *load_world(const std::string& filename) // Get world and return pointer.
 {
     timeval t1, t2;
     std::auto_ptr<world> w(new world);
 
 #ifdef TRISRC_LOADER
-    scoped_FILE fp(fopen(fname, "r"));
+    scoped_FILE fp(fopen(filename.c_str(), "r"));
     if(fp == nullptr) {
-        fprintf(stderr, "Cannot open file %s for input.\nE#%d\n", fname, errno);
+        std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
         return nullptr;
     }
 #else // OBJ_LOADER
-    std::string filename(fname);
     Obj obj;
     if (!obj.load_object_from_file(filename))
     {
-        fprintf(stderr, "Cannot open file '%s' for input.\nE#%d\n", fname, errno);
+        std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
         return nullptr;
     }
 #endif // TRISRC_LOADER

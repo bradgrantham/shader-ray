@@ -221,7 +221,7 @@ struct world
     float object_normal_inverse[16];
 };
 
-world *load_world(char *fname);
+world *load_world(const std::string& filename);
 void trace_image(int width, int height, float aspect, unsigned char *image, const world* Wd, const vec3& light_dir);
 
 
