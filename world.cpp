@@ -1,16 +1,15 @@
+#include <memory>
+#include <limits>
+#include <string>
+#include <thread>
+#include <iostream>
 #include <cerrno>
 #include <ctime>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
-#include <memory>
-#include <limits>
-#include <string>
-#include <thread>
-#include <iostream>
 #include <cstdint>
-#include <sys/time.h>
 #include "world.h"
 #include "obj-support.h"
 
@@ -83,7 +82,7 @@ static void initialize_runtime_parameters()
 }
 
 int total_treed = 0;
-time_t previous;
+std::chrono::time_point<std::chrono::system_clock> previous;
 int bvh_level_counts[64];
 int bvh_leaf_size_counts[64];
 int bvh_node_count = 0;
@@ -295,11 +294,13 @@ void partition(std::vector<indexed_triangle>& triangles, int start, unsigned int
 group* make_tree(triangle_set& triangles, int start, unsigned int count, int level = 0)
 {
     if(level == 0) {
-        previous = time(nullptr);
+        previous = std::chrono::system_clock::now();
     }
-    if(time(nullptr) > previous) {
+    auto now = std::chrono::system_clock::now();
+    std::chrono::duration<float> elapsed = now - previous;
+    if(elapsed.count() > 1.0) {
         fprintf(stderr, "total treed = %d\n", total_treed);
-        previous = time(nullptr);
+        previous = std::chrono::system_clock::now();
     }
 
     if((level >= bvh_max_depth) || count <= bvh_leaf_max) {
@@ -448,7 +449,6 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
 
 world *load_world(const std::string& filename) // Get world and return pointer.
 {
-    timeval t1, t2;
     std::auto_ptr<world> w(new world);
 
 #ifdef TRISRC_LOADER
@@ -468,7 +468,7 @@ world *load_world(const std::string& filename) // Get world and return pointer.
 
     w->background.set(.2, .2, .2);
 
-    gettimeofday(&t1, nullptr);
+    auto then = std::chrono::system_clock::now();
 #ifdef TRISRC_LOADER
     bool success = ParseTriSrc(fp, w->triangles);
 #else // OBJ_LOADER
@@ -478,16 +478,16 @@ world *load_world(const std::string& filename) // Get world and return pointer.
         fprintf(stderr, "Couldn't parse triangles from file.\n");
         return nullptr;
     }
-    gettimeofday(&t2, nullptr);
-    long long micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
-    fprintf(stderr, "Parsing: %f seconds\n", micros / 1000000.0);
+    auto now = std::chrono::system_clock::now();
+    std::chrono::duration<float> elapsed = now - then;
+    fprintf(stderr, "Parsing: %f seconds\n", elapsed.count());
 
     w->triangle_count = w->triangles.triangles.size();
     fprintf(stderr, "%d triangles.\n", w->triangle_count);
     fprintf(stderr, "%zd independent vertices.\n", w->triangles.vertices.size());
     fprintf(stderr, "%.2f vertices per triangle.\n", w->triangles.vertices.size() * 1.0 / w->triangle_count);
 
-    gettimeofday(&t1, nullptr);
+    then = std::chrono::system_clock::now();
 
     w->scene_center = w->triangles.box.center();
 
@@ -502,16 +502,17 @@ world *load_world(const std::string& filename) // Get world and return pointer.
     }
     w->scene_extent = sqrtf(scene_extent_squared) * 2;
 
-    gettimeofday(&t2, nullptr);
-    micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
-    fprintf(stderr, "Finding scene center and extent: %f seconds\n", micros / 1000000.0);
+    now = std::chrono::system_clock::now();
+    elapsed = now - then;
+    fprintf(stderr, "Finding scene center and extent: %f seconds\n", elapsed.count());
 
-    gettimeofday(&t1, nullptr);
+    then = std::chrono::system_clock::now();
     w->root = make_tree(w->triangles, 0, w->triangle_count);
-    gettimeofday(&t2, nullptr);
 
-    micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
-    fprintf(stderr, "BVH: %f seconds\n", micros / 1000000.0);
+    now = std::chrono::system_clock::now();
+    elapsed = now - then;
+
+    fprintf(stderr, "BVH: %f seconds\n", elapsed.count());
 
     print_tree_stats();
 
@@ -673,8 +674,7 @@ inline T round_up(T v, unsigned int r)
 void get_shader_data(world *w, scene_shader_data &data, unsigned int data_texture_width)
 {
     unsigned int size;
-    timeval t1, t2;
-    gettimeofday(&t1, nullptr);
+    auto then = std::chrono::system_clock::now();
 
     data.vertex_count = w->triangles.triangles.size() * 3;
     data.vertex_data_rows = (data.vertex_count + data_texture_width - 1) / data_texture_width;
@@ -709,14 +709,13 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 
     store_group_data(w->root, data);
 
-    gettimeofday(&t1, nullptr);
     for(int i = 0; i < 8; i++) {
         create_hitmiss(w->root, i); 
     }
-    gettimeofday(&t2, nullptr);
+    auto now = std::chrono::system_clock::now();
+    std::chrono::duration<float> elapsed = now - then;
 
-    long long micros = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;
-    fprintf(stderr, "hitmiss: %f seconds\n", micros / 1000000.0);
+    fprintf(stderr, "hitmiss: %f seconds\n", elapsed.count());
 
     for(int i = 0; i < 8; i++) {
         store_hitmiss(w->root, data, i, i * (data_texture_width * data.group_data_rows));

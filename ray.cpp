@@ -1,14 +1,14 @@
+#include <chrono>
+#include <string>
+#include <vector>
+#include <limits>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <string>
 #include <ctime>
 #include <cerrno>
-#include <sys/time.h>
-#include <vector>
-#include <limits>
 #include <FreeImagePlus.h>
 
 #define GLFW_INCLUDE_GLCOREARB
@@ -21,7 +21,7 @@ bool stream_frames = false;
 
 int gWindowWidth, gWindowHeight;
 world *gWorld;
-timeval prev_frame_time;
+std::chrono::time_point<std::chrono::system_clock> prev_frame_time;
 float zoom = 0.0f;
 float object_rotation[4];
 float light_rotation[4];
@@ -696,10 +696,9 @@ void DrawFrame(GLFWwindow *window)
     redraw_window = true;
     check_opengl(__FILE__, __LINE__);
 
-    timeval now;
-    gettimeofday(&now, nullptr);
-    //long long micros = (now.tv_sec - prev_frame_time.tv_sec) * 1000000 + now.tv_usec - prev_frame_time.tv_usec;
-    // printf("fps: %f (estimated %lld millis)\n", 1000000.0 / micros, micros / 1000);
+    auto now = std::chrono::system_clock::now();
+    std::chrono::duration<float> elapsed = now - prev_frame_time;
+    if(0) printf("fps: %f (estimated %f millis)\n", 1 / elapsed.count(), elapsed.count() * 1000);
     prev_frame_time = now;
 }
 
@@ -1075,7 +1074,7 @@ int main(int argc, char *argv[])
     update_light();
 
     init();
-    gettimeofday(&prev_frame_time, nullptr);
+    prev_frame_time = std::chrono::system_clock::now();
 
     redraw_window = true;
     while (!glfwWindowShouldClose(window)) {
@@ -1083,38 +1082,36 @@ int main(int argc, char *argv[])
         if(do_benchmark_run) {
             const int frame_count = 100;
 
-            usec_t frame_durations[frame_count];
-            usec_t frame_min = 1000000000000;
-            usec_t frame_max = 0;
+            float frame_durations[frame_count];
+            float frame_min = 1e6;
+            float frame_max = 0;
 
-            timeval tv;
 
             for(int i = 0; i < frame_count; i++) {
-                gettimeofday(&tv, nullptr);
-                usec_t then = tv.tv_sec * 1000000 + tv.tv_usec;
+                auto then = std::chrono::system_clock::now();
                 DrawFrame(window);
                 // glFinish();
                 glfwSwapBuffers(window);
-                gettimeofday(&tv, nullptr);
-                usec_t now = tv.tv_sec * 1000000 + tv.tv_usec;
-                usec_t duration = now - then;
-                frame_durations[i] = duration;
-                frame_min = std::min(duration, frame_min);
-                frame_max = std::max(duration, frame_max);
+                auto now = std::chrono::system_clock::now();
+                std::chrono::duration<float> elapsed = now - then;
+                frame_durations[i] = elapsed.count();
+                frame_min = std::min(elapsed.count(), frame_min);
+                frame_max = std::max(elapsed.count(), frame_max);
             }
             glfwSwapBuffers(window);
 
             printf("%d frames:\n", frame_count);
             for(int i = 0; i < 10; i++) {
-                usec_t duration_range = frame_max - frame_min;
-                usec_t bucket_start = frame_min + (duration_range) * i / 10;
-                usec_t bucket_end = frame_min + (duration_range) * (i + 1) / 10;
+                float duration_range = frame_max - frame_min;
+                float bucket_start = frame_min + (duration_range) * i / 10;
+                float bucket_end = frame_min + (duration_range) * (i + 1) / 10;
                 int count = 0;
                 for(int j = 0; j < frame_count; j++) {
-                    if(frame_durations[j] >= bucket_start && frame_durations[j] < bucket_end)
+                    if(frame_durations[j] >= bucket_start && frame_durations[j] < bucket_end) {
                         count++;
+                    }
                 }
-                printf("%.2f to %.2f ms, %.2f fps : %d\n", bucket_start / 1000.0, bucket_end / 1000.0, 1 / ((bucket_start + bucket_end) / 2.0 / 1000000.0), count);
+                printf("%.2f to %.2f ms, %.2f fps : %d\n", bucket_start * 1000.0, bucket_end * 1000.0, 1 / ((bucket_start + bucket_end) / 2.0), count);
             }
             do_benchmark_run = false;
         } else if(redraw_window) {
