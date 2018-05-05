@@ -6,6 +6,7 @@
 #include "vectormath.h"
 #include "geometry.h"
 #include "triangle-set.h"
+#include "group.h"
 
 struct camera { /* Viewpoint specification. */
     float fov; /* Entire View angle, left to right. */
