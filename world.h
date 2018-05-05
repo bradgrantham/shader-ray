@@ -9,15 +9,6 @@ struct camera { /* Viewpoint specification. */
     float fov; /* Entire View angle, left to right. */
 };
 
-struct surface_hit
-{
-    float t;
-    float uvw[3];
-    vec3 normal;
-    vec3 point;
-    vec3 color;
-};
-
 struct range
 {
     float t0, t1;
