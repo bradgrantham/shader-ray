@@ -1,36 +1,13 @@
 #pragma once
 
-#include "vectormath.h"
 #include <algorithm>
 #include <vector>
 #include <map>
+#include "vectormath.h"
+#include "geometry.h"
 
 struct camera { /* Viewpoint specification. */
     float fov; /* Entire View angle, left to right. */
-};
-
-struct range
-{
-    float t0, t1;
-    range() :
-        t0(-std::numeric_limits<float>::max()),
-        t1(std::numeric_limits<float>::max())
-    {}
-    range(const range &r) :
-        t0(r.t0),
-        t1(r.t1)
-    {}
-    range(float t0_, float t1_) :
-        t0(t0_),
-        t1(t1_)
-    {}
-    operator bool() { return t0 < t1; }
-};
-
-struct vertex {
-    vec3 v;
-    vec3 c;
-    vec3 n;
 };
 
 struct VertexComparator
@@ -51,48 +28,6 @@ struct VertexComparator
         if(v1.c.z < v2.c.z) { return true; } else if(v1.c.z > v2.c.z) { return false; }
 
         return false;
-    }
-};
-
-struct triangle
-{
-    vec3 v[3];
-    vec3 c[3];
-    vec3 n[3];
-
-    triangle()
-    {
-    }
-    triangle(const vertex& v0, const vertex& v1, const vertex& v2)
-    {
-        v[0] = v0.v; v[1] = v1.v; v[2] = v2.v;
-        c[0] = v0.c; c[1] = v1.c; c[2] = v2.c;
-        n[0] = v0.n; n[1] = v1.n; n[2] = v2.n;
-    }
-    triangle(const vec3 v_[3], const vec3 c_[3], const vec3 n_[3])
-    {
-        for(int i = 0; i < 3; i++) {
-            v[i] = v_[i];
-            c[i] = c_[i];
-            n[i] = n_[i];
-        }
-    }
-    ~triangle() {}
-};
-
-struct indexed_triangle
-{
-    int i[3];
-    box3d box;
-    vec3 barycenter;
-    indexed_triangle(int i0, int i1, int i2,
-        const vertex& v0, const vertex& v1, const vertex& v2)
-    {
-        i[0] = i0;
-        i[1] = i1;
-        i[2] = i2;
-        box.add(v0.v, v1.v, v2.v);
-        barycenter = (v0.v + v1.v + v2.v) / 3.0;
     }
 };
 
