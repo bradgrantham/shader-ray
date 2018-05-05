@@ -33,12 +33,6 @@ struct range
         t0(t0_),
         t1(t1_)
     {}
-    range &intersect(const range &r2)
-    {
-        t0 = std::max(t0, r2.t0);
-        t1 = std::min(t1, r2.t1);
-        return *this;
-    }
     operator bool() { return t0 < t1; }
 };
 
@@ -74,8 +68,6 @@ struct triangle
     vec3 v[3];
     vec3 c[3];
     vec3 n[3];
-
-    bool intersect(const ray& ray, const range& r, surface_hit *hit);
 
     triangle()
     {
@@ -176,8 +168,6 @@ struct group
     triangle_set& triangles;
     int start;
     unsigned int count;
-
-    bool intersect(const ray& ray, const range& r, surface_hit *hit);
 
     group(triangle_set& triangles_, group *neg, group *pos, const vec3& direction, const box3d& box_);
     group(triangle_set& triangles_, int start_, unsigned int count_);
