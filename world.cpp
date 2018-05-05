@@ -12,39 +12,10 @@
 #include <cstdint>
 #include "triangle-set.h"
 #include "geometry.h"
-#include "world.h"
 #include "obj-support.h"
 #include "trisrc-support.h"
-
-group::group(triangle_set& triangles_, group *neg, group *pos, const vec3& direction, const box3d& box_) :
-    D(direction),
-    box(box_),
-    negative(neg),
-    positive(pos),
-    triangles(triangles_),
-    start(0),
-    count(0)
-{
-}
-
-group::group(triangle_set& triangles_, int start_, unsigned int count_) :
-    negative(nullptr),
-    positive(nullptr),
-    triangles(triangles_),
-    start(start_),
-    count(count_)
-{
-    for(unsigned int i = 0; i < count; i++) {
-        triangle t = triangles[start + i];
-        box.add(t.v[0], t.v[1], t.v[2]);
-    }
-}
-
-group::~group()
-{
-    delete negative;
-    delete positive;
-}
+#include "group.h"
+#include "world.h"
 
 static int bvh_max_depth = 30; // Could set to 19 in order to fit in 20 bits for a 1024x1024 texture
 static unsigned int bvh_leaf_max = 10; // Empirically chosen on Intel embedded on MBP 13 late 2013
