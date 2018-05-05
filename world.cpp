@@ -436,48 +436,57 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
     return true;
 }
 
-#if 0
-    int index = filename.find_last_of(".");
-    string extension = filename.substr(index + 1);
-
-    if(extension == "trisrc") {
-    } else if(extension == "obj") {
-    } else {
-        cerr << "This program doesn't know how to load a file with extension " + extesion
-    }
-#endif
 
 world *load_world(const std::string& filename) // Get world and return pointer.
 {
     std::auto_ptr<world> w(new world);
 
-#ifdef TRISRC_LOADER
-    scoped_FILE fp(fopen(filename.c_str(), "r"));
-    if(fp == nullptr) {
-        std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
-        return nullptr;
-    }
-#else // OBJ_LOADER
-    Obj obj;
-    if (!obj.load_object_from_file(filename))
-    {
-        std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
-        return nullptr;
-    }
-#endif // TRISRC_LOADER
-
     w->background.set(.2, .2, .2);
 
+    int index = filename.find_last_of(".");
+    std::string extension = filename.substr(index + 1);
+
+    bool success = false;
+
     auto then = std::chrono::system_clock::now();
-#ifdef TRISRC_LOADER
-    bool success = ParseTriSrc(fp, w->triangles);
-#else // OBJ_LOADER
-    bool success = obj.fill_triangle_set(w->triangles);
-#endif // TRISRC_LOADER
-    if(!success) {
-        fprintf(stderr, "Couldn't parse triangles from file.\n");
+
+    if(extension == "trisrc") {
+
+        scoped_FILE fp(fopen(filename.c_str(), "r"));
+        if(fp == nullptr) {
+            std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
+            return nullptr;
+        }
+
+        success = ParseTriSrc(fp, w->triangles);
+
+        if(!success) {
+            fprintf(stderr, "Couldn't parse triangles from file.\n");
+            return nullptr;
+        }
+
+    } else if(extension == "obj") {
+
+        Obj obj;
+        if (!obj.load_object_from_file(filename))
+        {
+            std::cerr << "Cannot open \"" << filename << "\" for input, errno " << errno << "\n";
+            return nullptr;
+        }
+        success = obj.fill_triangle_set(w->triangles);
+
+        if(!success) {
+            fprintf(stderr, "Couldn't parse triangles from file.\n");
+            return nullptr;
+        }
+
+    } else {
+
+        std::cerr << "This program doesn't know how to load a file with extension " + extension << "\n";
         return nullptr;
+
     }
+
     auto now = std::chrono::system_clock::now();
     std::chrono::duration<float> elapsed = now - then;
     fprintf(stderr, "Parsing: %f seconds\n", elapsed.count());
