@@ -11,7 +11,6 @@ struct camera { /* Viewpoint specification. */
     float fov; /* Entire View angle, left to right. */
 };
 
-
 struct group
 {
     vec3 D; /* split direction */

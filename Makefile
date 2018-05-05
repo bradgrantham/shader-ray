@@ -8,7 +8,7 @@ LDFLAGS 	+=
 
 CXXFLAGS	+=	-Wall  -std=c++11 $(OPTFLAGS) -I/opt/local/include/
 
-SOURCES         = ray.cpp world.cpp obj-support.cpp
+SOURCES         = ray.cpp world.cpp obj-support.cpp trisrc-support.cpp
 
 OBJECTS         = $(SOURCES:.cpp=.o)
 
