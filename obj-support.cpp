@@ -1,5 +1,5 @@
 #include "obj-support.h"
-#include "world.h"
+#include "triangle-set.h"
 #include <string>
 #include <vector>
 #include <fstream>
