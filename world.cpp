@@ -10,6 +10,8 @@
 #include <cstdio>
 #include <cassert>
 #include <cstdint>
+#include "triangle-set.h"
+#include "geometry.h"
 #include "world.h"
 #include "obj-support.h"
 
