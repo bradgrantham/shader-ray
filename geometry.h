@@ -2,8 +2,6 @@
 
 #include "vectormath.h"
 #include <algorithm>
-#include <vector>
-#include <map>
 
 struct range
 {
