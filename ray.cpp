@@ -34,8 +34,8 @@ struct material {
     bool metal;
 };
 
-material materials[] = {
 // From Hoffman's notes from S2010
+std::vector<material> materials = {
     {{1, .71, .29}, true}, // gold 
     {{.95, .95, 0.88}, true}, // silver 
     {{0.95, 0.64, 0.54}, true}, // copper  ...? Looks a little too pink
@@ -47,7 +47,6 @@ material materials[] = {
     // {{.08, .08, .08}, false}, // glass (high) / ruby - XXX refractive
     // {{.17, .17, .17}, false}, // diamond - XXX refractive
 };
-int material_count = sizeof(materials) / sizeof(materials[0]);
 int which_material = 0;
 
 vec3 diffuse_colors[] = {
@@ -834,7 +833,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                 break;
 
             case 'M':
-                which_material = (which_material + 1) % material_count;
+                which_material = (which_material + 1) % materials.size();
                 redraw_window = true;
                 break;
         }
