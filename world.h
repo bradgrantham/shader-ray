@@ -14,8 +14,6 @@ struct camera { /* Viewpoint specification. */
 
 struct world
 {
-    char *Title;
-
     int triangle_count;
     triangle_set triangles; // base triangles, only traced through "root"
 
@@ -29,13 +27,11 @@ struct world
     int xsub, ysub;
 
     world() :
-        Title(0),
-        root(0)
+        root(nullptr)
     {};
     ~world()
     {
         delete root;
-        delete[] Title;
     }
 
     float camera_matrix[16];
