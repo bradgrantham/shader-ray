@@ -30,8 +30,6 @@ world *load_world(const std::string& filename) // Get world and return pointer.
 {
     std::auto_ptr<world> w(new world);
 
-    w->background.set(.2, .2, .2);
-
     int index = filename.find_last_of(".");
     std::string extension = filename.substr(index + 1);
 
@@ -193,9 +191,13 @@ void store_group_data(group *g, scene_shader_data &data)
     }
 }
 
+namespace
+{
+
 const int xPosDir = 0x1;
 const int yPosDir = 0x2;
 const int zPosDir = 0x4;
+const int hitmiss_directions_count = 8;
 
 vec3 get_coded_dir(int dircode)
 {
@@ -205,11 +207,14 @@ vec3 get_coded_dir(int dircode)
     return vec3(x, y, z);
 }
 
+const int hitmiss_max_stack_size = 64;
+const unsigned long hitmiss_stop_traversal = 0x7fffffffU;
+
 void create_hitmiss(group *root, int dircode)
 {
     vec3 dir = get_coded_dir(dircode);
 
-    group *stack[48];
+    group *stack[hitmiss_max_stack_size];
     group *g = root;
     int stack_top = -1;
 
@@ -247,6 +252,7 @@ void create_hitmiss(group *root, int dircode)
 
             g->dirhit[dircode] = g1;
             g->dirmiss[dircode] = miss;
+            assert(stack_top < hitmiss_max_stack_size);
             stack[++stack_top] = g2;
             g = g1;
         }
@@ -255,13 +261,15 @@ void create_hitmiss(group *root, int dircode)
 
 void store_hitmiss(group *g, scene_shader_data& data, int dircode, int base)
 {
-    data.group_hitmiss[(base + g->my_index) * 2 + 0] = g->dirhit[dircode] ? g->dirhit[dircode]->my_index : 0x7fffffffU;
-    data.group_hitmiss[(base + g->my_index) * 2 + 1] = g->dirmiss[dircode] ? g->dirmiss[dircode]->my_index : 0x7fffffffU;
+    data.group_hitmiss[(base + g->my_index) * 2 + 0] = g->dirhit[dircode] ? g->dirhit[dircode]->my_index : hitmiss_stop_traversal;
+    data.group_hitmiss[(base + g->my_index) * 2 + 1] = g->dirmiss[dircode] ? g->dirmiss[dircode]->my_index : hitmiss_stop_traversal;
     if(g->negative != nullptr) {
         store_hitmiss(g->negative, data, dircode, base);
         store_hitmiss(g->positive, data, dircode, base);
     }
 }
+
+};
 
 template <class T>
 inline T round_up(T v, unsigned int r)
@@ -307,7 +315,7 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 
     store_group_data(w->root, data);
 
-    for(int i = 0; i < 8; i++) {
+    for(int i = 0; i < hitmiss_directions_count; i++) {
         create_hitmiss(w->root, i); 
     }
     auto now = std::chrono::system_clock::now();
@@ -315,7 +323,7 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
 
     fprintf(stderr, "hitmiss: %f seconds\n", elapsed.count());
 
-    for(int i = 0; i < 8; i++) {
+    for(int i = 0; i < hitmiss_directions_count; i++) {
         store_hitmiss(w->root, data, i, i * (data_texture_width * data.group_data_rows));
     }
 }

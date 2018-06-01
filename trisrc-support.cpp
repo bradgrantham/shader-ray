@@ -48,7 +48,7 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
         }
 
         if(shininess > 0 && shininess < 1) {
-            // shininess is not exponent - what is it?
+            // shininess in TRISRC is not exponent - what is it? percentage?
             shininess *= 10;
         }
 

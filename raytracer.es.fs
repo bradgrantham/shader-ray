@@ -97,17 +97,16 @@ struct surface_hit
 };
 
 const highp float infinitely_far = 10000000.0;
+const highp float pi = 3.14159265259;
+const highp float tau = 2 * pi;
 
 bool sphere_map_environment = false;
 
 vec2 get_environment_map_coords(vec3 d)
 {
-    mediump vec2 sample = vec2(1.0 + atan(-d.z, d.x) / 3.14159265359 / 2.0, 1.0 - acos(d.y) / 3.141592);
+    mediump vec2 sample = vec2(1.0 + atan(-d.z, d.x) / tau, 1.0 - acos(d.y) / pi);
     return sample;
 }
-
-const float pi = 3.14159265359;
-const float tau = 2 * 3.14159265359;
 
 vec3 sample_environment(in ray r, sampler2D sampler)
 {
@@ -125,14 +124,18 @@ vec3 sample_environment(in ray r, sampler2D sampler)
 
     vec2 dpdx = vec2(dudx, dvdx);
     vec2 dpdy = vec2(dudy, dvdy);
-
-    if(which == 1)
+ 
+    if(which == 1) {
+        // sample with differentials
         return textureGrad(sampler, sample, dpdx, dpdy).rgb;
-    else if(which == 2)
+    } else if(which == 2) {
+        // draw dY differential for debugging
         return vec3((abs(dpdy) * vec2(1.0, 1.0)) * 100, 0.0);
-    else 
+    } else  {
+        // sample without differentials
         // return texture(sampler, sample).rgb;
         return textureGrad(sampler, sample, vec2(0, 0), vec2(0, 0)).rgb;
+    }
 }
 
 surface_hit surface_hit_init()
@@ -291,8 +294,9 @@ void triangle_intersect(highp float which, in ray theray, in range r, inout surf
     highp float det = dot(e0, M);
 
     const highp float epsilon = 0.0000001; // .000001 from M-T paper too large for bunny
-    if(det > -epsilon && det < epsilon)
+    if(det > -epsilon && det < epsilon) {
         return;
+    }
 
     float inv_det = 1.0 / det;
 
@@ -301,18 +305,22 @@ void triangle_intersect(highp float which, in ray theray, in range r, inout surf
     highp vec3 T = theray.P - v0;
     highp vec3 Q = cross(T, e0);
     highp float d = -dot(e1, Q) * inv_det;
-    if(d > hit.t)
+    if(d > hit.t) {
         return;
-    if(d < r.t0 || d > r.t1)
+    }
+    if(d < r.t0 || d > r.t1) {
         return;
+    }
 
     mediump float u = dot(T, M) * inv_det;
-    if(u < 0.0 || u > 1.0)
+    if(u < 0.0 || u > 1.0) {
         return;
+    }
 
     mediump float v = dot(theray.D, Q) * inv_det;
-    if(v < 0.0 || u + v > 1.0)
+    if(v < 0.0 || u + v > 1.0) {
         return;
+    }
 
     hit.which = which;
     hit.t = d;
@@ -338,9 +346,11 @@ void triangle_intersect(highp float which, in ray theray, in range r, inout surf
 void shade(in surface_hit hit, in ray theray, out mediump vec3 normal, out highp vec3 point, out vec3 color)
 {
     if(hit.which < 0.0) {
+
         color = vec3(1, 0, 0);
         normal = vec3(0, 0, -1);
         point = vec3(0, 0, 0);
+
     } else {
 
         point = theray.P + theray.D * hit.t; // barycentric interpolate?
@@ -380,15 +390,22 @@ void group_intersect(highp float root, in ray theray, in range prevr, inout surf
                 //  takes precedence so could be fat leaves at max
                 //  depth, need to carefully only make web scenes with
                 //  forcibly fewer objects at leaf
+
 #ifdef CONSTANT_LENGTH_LOOPS
+
                 for(highp float j = 0.0; j < max_leaf_tests; j++) {
-                    if(j >= gg.count)
+                    if(j >= gg.count) {
                         break;
-#else
-                for(highp float j = 0.0; j < gg.count; j++) {
-#endif
+                    }
                     triangle_intersect(gg.start + j, theray, r, hit);
                 }
+
+#else
+
+                for(highp float j = 0.0; j < gg.count; j++) {
+                    triangle_intersect(gg.start + j, theray, r, hit);
+                }
+#endif
             }
             g = gg.hit_next;
         } else {
@@ -396,10 +413,13 @@ void group_intersect(highp float root, in ray theray, in range prevr, inout surf
         }
 
 #ifdef CONSTANT_LENGTH_LOOPS
-        if(g >= terminator)
+        if(g >= terminator) {
             return;
-        if(i == max_bvh_iterations - 1)
+        }
+
+        if(i == max_bvh_iterations - 1) {
             set_bad_hit(hit, 1.0, 0.0, 0.0);
+        }
     }
 #else
     }
@@ -454,8 +474,9 @@ int intersect_and_shade(in ray worldray, out vec3 object_diffuse, out vec3 objec
 
     group_intersect(tree_root, objectray, make_range(0.0, 100000000.0), shading);
 
-    if(shading.t >= infinitely_far)
+    if(shading.t >= infinitely_far) {
         return 0;
+    }
 
     if(shading.t == -1.0) {
         object_diffuse = shading.uvw;
@@ -470,8 +491,9 @@ int intersect_and_shade(in ray worldray, out vec3 object_diffuse, out vec3 objec
     highp vec3 world_normal;
     world_normal = (object_normal_inverse * vec4(object_normal, 0.0)).xyz;
 
-    if(dot(world_normal, worldray.D) > 0.0)
+    if(dot(world_normal, worldray.D) > 0.0) {
         world_normal *= -1.0;
+    }
 
     ray transferred = ray_transfer(worldray, shading.t, world_normal);
 
@@ -522,10 +544,12 @@ vec3 trace(in ray worldray)
         vec3 normal;
 
         int hit_something = intersect_and_shade(worldray, object_diffuse, object_specular, normal, reflected);
-        if(hit_something == 0)
+        if(hit_something == 0) {
             break;
-        if(hit_something == 2)
+        }
+        if(hit_something == 2) {
             return object_diffuse;
+        }
 
         if(object_diffuse.x > 0.0 && object_diffuse.y > 0.0 && object_diffuse.z > 0.0) {
             vec3 diffuse_irradiance =
@@ -549,10 +573,11 @@ vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
 
 vec4 screenspace_binary(highp int v)
 {
-    if(gl_FragCoord.y < 512.0 - 32.0)
+    if(gl_FragCoord.y < 512.0 - 32.0) {
         v = 0;
-    else if(gl_FragCoord.y < 512.0 - 16.0)
+    } else if(gl_FragCoord.y < 512.0 - 16.0) {
         v = 0x5555;
+    }
     int bit = int(512.0 - gl_FragCoord.x) / 16;
 
     highp int div_by_2_bit = v;
@@ -598,7 +623,8 @@ void main()
         return;
     }
 
-    if(which == 3) { // XXX debug
+    if(which == 3) {
+        // XXX draw this pixel's differentials for debugging
         vec2 me_left = get_environment_map_coords(d - worldray.dDdx / 2.0);
         vec2 me_right = get_environment_map_coords(d + worldray.dDdx / 2.0);
         vec2 me_below = get_environment_map_coords(d - worldray.dDdy / 2.0);
@@ -610,7 +636,7 @@ void main()
     result = trace(worldray);
 
     if(which == 5) {
-        // XXX reference image
+        // XXX reference image with subsampling
         result = vec3(0, 0, 0);
         const int blarg = 5;
         for(int i = 0; i < blarg; i++) {
@@ -630,10 +656,11 @@ void main()
         result /= blarg * blarg;
     }
 
-    if(do_tonemap)
+    if(do_tonemap) {
         fragment_color = vec4(tonemap_and_gamma(result), 1.0);
-    else
+    } else {
         fragment_color = vec4(result, 1.0);
+    }
 
     // fragment_color = vec4(worldray.dDdy * 1000.0, 1.0);
 }

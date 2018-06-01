@@ -49,13 +49,12 @@ std::vector<material> materials = {
 };
 int which_material = 0;
 
-vec3 diffuse_colors[] = {
+std::vector<vec3> diffuse_colors = {
     { 1, 1, 1 }, // white
     { 1, .5, .5 }, // reddish
     { .25, 1, .25 }, // quite green
     { .5, .5, 1 }, // blueish
 };
-int diffuse_color_count = sizeof(diffuse_colors) / sizeof(diffuse_colors[0]);
 int which_diffuse_color = 0;
 
 void drag_to_rotation(float dx, float dy, float rotation[4])
@@ -828,7 +827,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                 break;
 
             case 'D':
-                which_diffuse_color = (which_diffuse_color + 1) % diffuse_color_count;
+                which_diffuse_color = (which_diffuse_color + 1) % diffuse_colors.size();
                 redraw_window = true;
                 break;
 
@@ -1064,6 +1063,7 @@ int main(int argc, char *argv[])
     gWorld->cam.fov = to_radians(40.0);
     zoom = gWorld->scene_extent / 2 / sinf(gWorld->cam.fov / 2);
 
+    // 20 degrees around an axis halfway between +X and -Y
     light_rotation[0] = to_radians(-20.0);
     light_rotation[1] = .707;
     light_rotation[2] = -.707;
@@ -1100,10 +1100,11 @@ int main(int argc, char *argv[])
             glfwSwapBuffers(window);
 
             printf("%d frames:\n", frame_count);
-            for(int i = 0; i < 10; i++) {
+            const int bucket_count = 10;
+            for(int i = 0; i < bucket_count; i++) {
                 float duration_range = frame_max - frame_min;
-                float bucket_start = frame_min + (duration_range) * i / 10;
-                float bucket_end = frame_min + (duration_range) * (i + 1) / 10;
+                float bucket_start = frame_min + (duration_range) * i / bucket_count;
+                float bucket_end = frame_min + (duration_range) * (i + 1) / bucket_count;
                 int count = 0;
                 for(int j = 0; j < frame_count; j++) {
                     if(frame_durations[j] >= bucket_start && frame_durations[j] < bucket_end) {

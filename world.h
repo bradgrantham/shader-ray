@@ -18,7 +18,6 @@ struct world
     triangle_set triangles; // base triangles, only traced through "root"
 
     group *root;
-    vec3 background;
 
     vec3 scene_center;
     float scene_extent;
