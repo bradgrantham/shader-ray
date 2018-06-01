@@ -1,16 +1,48 @@
 #include <chrono>
 #include <vector>
+#include <map>
 #include <cstdlib>
 #include "bvh.h"
 
-static int bvh_max_depth = 30; // Could set to 19 in order to fit in 20 bits for a 1024x1024 texture
-static unsigned int bvh_leaf_max = 10; // Empirically chosen on Intel embedded on MBP 13 late 2013
+// unnamed namespace for file scope
+namespace
+{
 
-static float sah_ctrav = 1;
-static float sah_cisec = 4; // ??
+// Number of shapes at which BVH creation just makes a leaf
+unsigned int bvh_leaf_max = 10; // Empirically chosen on Intel embedded on MBP 13 late 2013
 
-static void initialize_runtime_parameters() __attribute__((constructor));
-static void initialize_runtime_parameters()
+// No BVH nodes will be created below this depth; overrides bvh_leaf_max
+// Could set to 19 in order to fit in 20 bits for a 1024x1024 texture
+int bvh_max_depth = 30;
+
+// Total shapes processed so far during make_bvh recursion
+int total_shapes_processed = 0;
+
+// Last time total_shapes_processed was printed
+std::chrono::time_point<std::chrono::system_clock> previous_total_shapes_print;
+
+// http://en.cppreference.com/w/cpp/language/value_initialization means "int" value in map element is initialized to 0
+std::map<int, int> bvh_node_count_by_level;
+
+// Lump all leaves this size or bigger together for stats
+const int bvh_leaf_max_size_for_stats = 64;
+
+// Number of leaves the max size or bigger
+int bvh_leaf_count_ge_max_size = 0;
+
+// Histogram of leaf size
+std::map<int, int> bvh_leaf_count_by_size;
+
+// Number of nodes and then leaves created
+int bvh_node_count = 0;
+int bvh_leaf_count = 0;
+
+// Surface area heuristic constants for traversal and intersection
+float sah_ctrav = 1;
+float sah_cisec = 4;    // A guess.
+
+void initialize_runtime_parameters() __attribute__((constructor));
+void initialize_runtime_parameters()
 {
     if(getenv("BVH_MAX_DEPTH") != 0) {
         bvh_max_depth = atoi(getenv("BVH_MAX_DEPTH"));
@@ -30,30 +62,23 @@ static void initialize_runtime_parameters()
     }
 }
 
-int total_treed = 0;
-std::chrono::time_point<std::chrono::system_clock> previous;
-int bvh_level_counts[64];
-int bvh_leaf_size_counts[64];
-int bvh_node_count = 0;
-int bvh_leaf_count = 0;
+}; // unnamed namespace for file scope
 
 void print_bvh_stats()
 {
     fprintf(stderr, "%d bvh nodes\n", bvh_node_count);
     fprintf(stderr, "%d of those are leaves\n", bvh_leaf_count);
-    for(int i = 0; i < bvh_max_depth + 1; i++) {
-        fprintf(stderr, "bvh level %2d: %6d nodes\n", i, bvh_level_counts[i]);
-    }
-    int largest_leaf_count = 63;
-    while((largest_leaf_count > 0) && (bvh_leaf_size_counts[largest_leaf_count]) == 0) {
-        largest_leaf_count--;
+
+    for(auto& b : bvh_node_count_by_level) {
+        fprintf(stderr, "bvh level %2d: %6d nodes\n", b.first, b.second);
     }
 
-    for(int i = 0; i <= largest_leaf_count; i++) {
-        fprintf(stderr, "%2d objects in %6d leaves\n", i, bvh_leaf_size_counts[i]);
+    for(auto& b : bvh_leaf_count_by_size) {
+        fprintf(stderr, "%2d shapes in %6d leaves\n", b.first, b.second);
     }
-    if(bvh_leaf_size_counts[63] > 0) {
-        fprintf(stderr, "63 or more objects in %6d leaves\n", bvh_leaf_size_counts[63]);
+
+    if(bvh_leaf_count_ge_max_size > 0) {
+        fprintf(stderr, "%d or more objects in %6d leaves\n", bvh_leaf_max_size_for_stats, bvh_leaf_count_ge_max_size);
     }
 }
 
@@ -80,11 +105,15 @@ float sah(const vec3& boxdim, const vec3& lboxdim, int ltri, const vec3& rboxdim
 
 group *make_leaf(triangle_set& triangles, int start, int count, int level)
 {
-    total_treed += count;
+    total_shapes_processed += count;
     group* g = new group(triangles, start, count);
-    bvh_leaf_size_counts[std::min(63, count)]++;
+    if(count >= bvh_leaf_max_size_for_stats) {
+        bvh_leaf_count_ge_max_size++;
+    } else {
+        bvh_leaf_count_by_size[count]++;
+    }
     bvh_leaf_count++;
-    bvh_level_counts[level]++;
+    bvh_node_count_by_level[level]++;
     bvh_node_count++;
     return g;
 }
@@ -243,13 +272,13 @@ void partition(std::vector<indexed_triangle>& triangles, int start, unsigned int
 group* make_bvh(triangle_set& triangles, int start, unsigned int count, int level)
 {
     if(level == 0) {
-        previous = std::chrono::system_clock::now();
+        previous_total_shapes_print = std::chrono::system_clock::now();
     }
     auto now = std::chrono::system_clock::now();
-    std::chrono::duration<float> elapsed = now - previous;
+    std::chrono::duration<float> elapsed = now - previous_total_shapes_print;
     if(elapsed.count() > 1.0) {
-        fprintf(stderr, "total treed = %d\n", total_treed);
-        previous = std::chrono::system_clock::now();
+        fprintf(stderr, "total shapes processed = %d\n", total_shapes_processed);
+        previous_total_shapes_print = std::chrono::system_clock::now();
     }
 
     if((level >= bvh_max_depth) || count <= bvh_leaf_max) {
@@ -282,7 +311,7 @@ group* make_bvh(triangle_set& triangles, int start, unsigned int count, int leve
     }
 
     if(best_heuristic >= sah(count)) {
-        fprintf(stderr, "Large leaf node (no good split) at %d, %u triangles, total %d\n", level, count, total_treed);
+        fprintf(stderr, "Large leaf node (no good split) at %d, %u triangles, total %d\n", level, count, total_shapes_processed);
         return make_leaf(triangles, start, count, level);
     }
 
@@ -300,12 +329,12 @@ group* make_bvh(triangle_set& triangles, int start, unsigned int count, int leve
         g = new group(triangles, g1, nullptr, split_plane_normal, vertexbox);
         group *g2 = make_bvh(triangles, startB, countB, level + 1);
         g->positive = g2;
-        bvh_level_counts[level]++;
+        bvh_node_count_by_level[level]++;
         bvh_node_count++;
 
     } else {
 
-        fprintf(stderr, "Large leaf node (all one side) at %d, %u triangles, total %d\n", level, count, total_treed);
+        fprintf(stderr, "Large leaf node (all one side) at %d, %u triangles, total %d\n", level, count, total_shapes_processed);
         g = make_leaf(triangles, start, count, level);
     }
 
