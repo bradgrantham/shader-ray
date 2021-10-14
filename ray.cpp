@@ -36,7 +36,7 @@ bool redraw_window = false;
 bool stream_frames = false;
 
 int gWindowWidth, gWindowHeight;
-world *gWorld;
+world_ptr gWorld;
 std::chrono::time_point<std::chrono::system_clock> prev_frame_time;
 float zoom = 0.0f;
 float object_rotation[4];
@@ -159,7 +159,7 @@ void update_light()
     light_dir.z = l2.z;
 }
 
-void update_view_params(world *world, float zoom)
+void update_view_params(world_ptr world, float zoom)
 {
     vec3 offset;
 
@@ -354,7 +354,7 @@ int new_data_texture()
     return tex;
 }
 
-void load_scene_data(world *w, raytracer_gl_binding &binding)
+void load_scene_data(world_ptr w, raytracer_gl_binding &binding)
 {
     const char *filename;
     if(getenv("SHADER") != nullptr) {

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <memory>
 #include "vectormath.h"
 #include "geometry.h"
 #include "triangle-set.h"
@@ -58,8 +59,10 @@ struct world
     float object_normal_inverse[16];
 };
 
-world *load_world(const std::string& filename);
-void trace_image(int width, int height, float aspect, unsigned char *image, const world* Wd, const vec3& light_dir);
+typedef std::shared_ptr<world> world_ptr;
+
+world_ptr load_world(const std::string& filename);
+void trace_image(int width, int height, float aspect, unsigned char *image, const world_ptr Wd, const vec3& light_dir);
 
 
 struct scene_shader_data
@@ -89,4 +92,4 @@ struct scene_shader_data
     ~scene_shader_data();
 };
 
-void get_shader_data(world *w, scene_shader_data &data, unsigned int data_texture_width);
+void get_shader_data(world_ptr w, scene_shader_data &data, unsigned int data_texture_width);

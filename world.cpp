@@ -43,9 +43,9 @@ struct scoped_FILE
     operator FILE*() { return fp; }
 };
 
-world *load_world(const std::string& filename) // Get world and return pointer.
+world_ptr load_world(const std::string& filename) // Get world and return pointer.
 {
-    std::auto_ptr<world> w(new world);
+    auto w = std::make_shared<world>();
     w->triangles = std::make_shared<triangle_set>();
 
     int index = filename.find_last_of(".");
@@ -130,7 +130,7 @@ world *load_world(const std::string& filename) // Get world and return pointer.
 
     print_bvh_stats();
 
-    return w.release();
+    return w;
 }
 
 int get_node_count(group *g)
@@ -295,7 +295,7 @@ inline T round_up(T v, unsigned int r)
     return ((v + r - 1) / r) * r;
 }
 
-void get_shader_data(world *w, scene_shader_data &data, unsigned int data_texture_width)
+void get_shader_data(world_ptr w, scene_shader_data &data, unsigned int data_texture_width)
 {
     unsigned int size;
     auto then = std::chrono::system_clock::now();
