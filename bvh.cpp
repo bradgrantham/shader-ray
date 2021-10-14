@@ -119,7 +119,7 @@ float sah(const vec3& boxdim, const vec3& lboxdim, int ltri, const vec3& rboxdim
     return sah_ctrav + sah_cisec * (larea / area * ltri + rarea / area * rtri);
 }
 
-group *make_leaf(triangle_set& triangles, int start, int count, int level)
+group *make_leaf(triangle_set_ptr triangles, int start, int count, int level)
 {
     total_shapes_processed += count;
     group* g = new group(triangles, start, count);
@@ -285,7 +285,7 @@ void partition(std::vector<indexed_triangle>& triangles, int start, unsigned int
     *countB = start + count - s1;
 }
 
-group* make_bvh(triangle_set& triangles, int start, unsigned int count, int level)
+group* make_bvh(triangle_set_ptr triangles, int start, unsigned int count, int level)
 {
     if(level == 0) {
         previous_total_shapes_print = std::chrono::system_clock::now();
@@ -305,8 +305,8 @@ group* make_bvh(triangle_set& triangles, int start, unsigned int count, int leve
     box3d vertexbox;
     box3d barycenterbox;
     for(unsigned int i = 0; i < count; i++) {
-        vertexbox.add(triangles.triangles[start + i].box);
-        barycenterbox.add(triangles.triangles[start + i].barycenter);
+        vertexbox.add(triangles->triangles[start + i].box);
+        barycenterbox.add(triangles->triangles[start + i].barycenter);
     }
 
     vec3 baryboxdim = barycenterbox.dim();
@@ -317,13 +317,13 @@ group* make_bvh(triangle_set& triangles, int start, unsigned int count, int leve
 
     if(baryboxdim.x > baryboxdim.y && baryboxdim.x > baryboxdim.z) {
         split_plane_normal = vec3(1, 0, 0);
-        best_heuristic = get_best_split(vertexbox, 0, triangles.triangles, start, count, split_plane, best_heuristic);
+        best_heuristic = get_best_split(vertexbox, 0, triangles->triangles, start, count, split_plane, best_heuristic);
     } else if(baryboxdim.y > baryboxdim.z) {
         split_plane_normal = vec3(0, 1, 0);
-        best_heuristic = get_best_split(vertexbox, 1, triangles.triangles, start, count, split_plane, best_heuristic);
+        best_heuristic = get_best_split(vertexbox, 1, triangles->triangles, start, count, split_plane, best_heuristic);
     } else {
         split_plane_normal = vec3(0, 0, 1);
-        best_heuristic = get_best_split(vertexbox, 2, triangles.triangles, start, count, split_plane, best_heuristic);
+        best_heuristic = get_best_split(vertexbox, 2, triangles->triangles, start, count, split_plane, best_heuristic);
     }
 
     if(best_heuristic >= sah(count)) {
@@ -334,7 +334,7 @@ group* make_bvh(triangle_set& triangles, int start, unsigned int count, int leve
     int startA, countA;
     int startB, countB;
 
-    partition(triangles.triangles, start, count, split_plane, split_plane_normal, &startA, &countA, &startB, &countB);
+    partition(triangles->triangles, start, count, split_plane, split_plane_normal, &startA, &countA, &startB, &countB);
 
     group *g;
 

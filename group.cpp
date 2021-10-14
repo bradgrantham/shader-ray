@@ -16,7 +16,7 @@
 
 #include "group.h"
 
-group::group(triangle_set& triangles_, group *neg, group *pos, const vec3& direction, const box3d& box_) :
+group::group(triangle_set_ptr triangles_, group *neg, group *pos, const vec3& direction, const box3d& box_) :
     D(direction),
     box(box_),
     negative(neg),
@@ -27,7 +27,7 @@ group::group(triangle_set& triangles_, group *neg, group *pos, const vec3& direc
 {
 }
 
-group::group(triangle_set& triangles_, int start_, unsigned int count_) :
+group::group(triangle_set_ptr triangles_, int start_, unsigned int count_) :
     negative(nullptr),
     positive(nullptr),
     triangles(triangles_),
@@ -35,7 +35,7 @@ group::group(triangle_set& triangles_, int start_, unsigned int count_) :
     count(count_)
 {
     for(unsigned int i = 0; i < count; i++) {
-        triangle t = triangles[start + i];
+        triangle t = triangles->get(start + i);
         box.add(t.v[0], t.v[1], t.v[2]);
     }
 }

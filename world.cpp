@@ -46,6 +46,7 @@ struct scoped_FILE
 world *load_world(const std::string& filename) // Get world and return pointer.
 {
     std::auto_ptr<world> w(new world);
+    w->triangles = std::make_shared<triangle_set>();
 
     int index = filename.find_last_of(".");
     std::string extension = filename.substr(index + 1);
@@ -95,18 +96,18 @@ world *load_world(const std::string& filename) // Get world and return pointer.
     std::chrono::duration<float> elapsed = now - then;
     fprintf(stderr, "Parsing: %f seconds\n", elapsed.count());
 
-    w->triangle_count = w->triangles.triangles.size();
+    w->triangle_count = w->triangles->triangles.size();
     fprintf(stderr, "%d triangles.\n", w->triangle_count);
-    fprintf(stderr, "%zd independent vertices.\n", w->triangles.vertices.size());
-    fprintf(stderr, "%.2f vertices per triangle.\n", w->triangles.vertices.size() * 1.0 / w->triangle_count);
+    fprintf(stderr, "%zd independent vertices.\n", w->triangles->vertices.size());
+    fprintf(stderr, "%.2f vertices per triangle.\n", w->triangles->vertices.size() * 1.0 / w->triangle_count);
 
     then = std::chrono::system_clock::now();
 
-    w->scene_center = w->triangles.box.center();
+    w->scene_center = w->triangles->box.center();
 
     float scene_extent_squared = 0;
     for(int i = 0; i < w->triangle_count; i++) {
-        triangle t = w->triangles[i];
+        triangle t = w->triangles->get(i);
         for(int j = 0; j < 3; j++) {
             vec3 to_center = w->scene_center - t.v[j];
             float distance_squared = dot(to_center, to_center);
@@ -299,16 +300,16 @@ void get_shader_data(world *w, scene_shader_data &data, unsigned int data_textur
     unsigned int size;
     auto then = std::chrono::system_clock::now();
 
-    data.vertex_count = w->triangles.triangles.size() * 3;
+    data.vertex_count = w->triangles->triangles.size() * 3;
     data.vertex_data_rows = (data.vertex_count + data_texture_width - 1) / data_texture_width;
     size = 3 * data_texture_width * data.vertex_data_rows;
     data.vertex_positions = new float[size];
     data.vertex_normals = new float[size];
     data.vertex_colors = new float[size];
-    for(unsigned int i = 0; i < w->triangles.triangles.size(); i++) {
-        const indexed_triangle& t = w->triangles.triangles[i];
+    for(unsigned int i = 0; i < w->triangles->triangles.size(); i++) {
+        const indexed_triangle& t = w->triangles->triangles[i];
         for(unsigned int j = 0; j < 3; j++) {
-            const vertex& vtx = w->triangles.vertices[t.i[j]];
+            const vertex& vtx = w->triangles->vertices[t.i[j]];
             vtx.v.store(data.vertex_positions, i * 3 + j);
             vtx.n.store(data.vertex_normals, i * 3 + j);
             vtx.c.store(data.vertex_colors, i * 3 + j);

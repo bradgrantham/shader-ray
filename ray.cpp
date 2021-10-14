@@ -1071,7 +1071,6 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Unhandled FIP image type\n");
                 exit(EXIT_FAILURE);
             }
-
         }
     }
 

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "vectormath.h"
+#include "triangle-set.h"
 
 //
 // OBJ file format - https://en.wikipedia.org/wiki/Wavefront_.obj_file
@@ -26,7 +27,7 @@
 //                a single vertex attribute or face of a triangle.
 //
 //
-struct triangle_set;
+
 class Obj
 {
     struct Face
@@ -73,5 +74,5 @@ public:
     ~Obj();
 
     bool load_object_from_file(const std::string& filename);
-    bool fill_triangle_set(triangle_set& triangles);
+    bool fill_triangle_set(triangle_set_ptr triangles);
 };

@@ -40,7 +40,7 @@ static void initialize_runtime_parameters()
 }
 
 
-bool ParseTriSrc(FILE *fp, triangle_set& triangles)
+bool ParseTriSrc(FILE *fp, triangle_set_ptr triangles)
 {
     char texture_name[512];
     char tag_name[512];
@@ -98,7 +98,7 @@ bool ParseTriSrc(FILE *fp, triangle_set& triangles)
             vtx[i].n.set(n[i][0], n[i][1], n[i][2]);
             vtx[i].n = normalize(vtx[i].n);
         }
-        triangles.add(vtx[0], vtx[1], vtx[2]);
+        triangles->add(vtx[0], vtx[1], vtx[2]);
     }
     return true;
 }

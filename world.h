@@ -31,7 +31,7 @@ struct camera { /* Viewpoint specification. */
 struct world
 {
     int triangle_count;
-    triangle_set triangles; // base triangles, only traced through "root"
+    triangle_set_ptr triangles; // base triangles, only traced through "root"
 
     group *root;
 

@@ -19,8 +19,6 @@
 #include <vector>
 #include <cstdio>
 #include "vectormath.h"
-#include "vectormath.h"
+#include "triangle-set.h"
 
-struct triangle_set;
-
-bool ParseTriSrc(FILE *fp, triangle_set& triangles);
+bool ParseTriSrc(FILE *fp, triangle_set_ptr triangles);

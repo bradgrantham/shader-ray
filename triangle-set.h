@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <memory>
 #include "vectormath.h"
 #include "geometry.h"
 
@@ -26,7 +27,6 @@ struct VertexComparator
 {
     bool operator()(const vertex& v1, const vertex& v2) const
     {
-        // grr, should be subscripted
         if(v1.v.x < v2.v.x) { return true; } else if(v1.v.x > v2.v.x) { return false; }
         if(v1.v.y < v2.v.y) { return true; } else if(v1.v.y > v2.v.y) { return false; }
         if(v1.v.z < v2.v.z) { return true; } else if(v1.v.z > v2.v.z) { return false; }
@@ -55,6 +55,11 @@ struct triangle_set
         int i1 = triangles[i].i[1];
         int i2 = triangles[i].i[2];
         return triangle(vertices[i0], vertices[i1], vertices[i2]);
+    }
+
+    triangle get(int i)
+    {
+        return (*this)[i];
     }
 
     std::map<vertex, int, VertexComparator> vertex_map;      // only used during adding
@@ -93,3 +98,5 @@ public:
         std::swap(triangles[i0], triangles[i1]);
     }
 };
+
+typedef std::shared_ptr<triangle_set> triangle_set_ptr;

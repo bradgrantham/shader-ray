@@ -317,7 +317,7 @@ bool Obj::load_object_from_file(const std::string& filename)
     return true;
 }
 
-bool Obj::fill_triangle_set(triangle_set& triangles)
+bool Obj::fill_triangle_set(triangle_set_ptr triangles)
 {
     // Convert from face-vertex mesh to list of triangles
     for (auto & face : faces)
@@ -342,7 +342,7 @@ bool Obj::fill_triangle_set(triangle_set& triangles)
                 vtx[2].n = normals[vi2.vn];
             }
             vtx[0].c = vtx[1].c = vtx[2].c = vec3(1.0, 1.0, 1.0);
-            triangles.add(vtx[0], vtx[1], vtx[2]);
+            triangles->add(vtx[0], vtx[1], vtx[2]);
         }
     }
 
